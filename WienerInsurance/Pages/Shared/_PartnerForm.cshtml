@@ -1,0 +1,73 @@
+﻿@model WienerInsurance.ViewModels.PartnerInputViewModel
+
+<div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+<div class="row">
+    <div class="col-md-6 form-group mb-3">
+        <label asp-for="FirstName" class="font-weight-bold text-muted small">Ime *</label>
+        <input asp-for="FirstName" class="form-control" placeholder="Upišite ime..." />
+        <span asp-validation-for="FirstName" class="text-danger small d-block"></span>
+    </div>
+    <div class="col-md-6 form-group mb-3">
+        <label asp-for="LastName" class="font-weight-bold text-muted small">Prezime *</label>
+        <input asp-for="LastName" class="form-control" placeholder="Upišite prezime..." />
+        <span asp-validation-for="LastName" class="text-danger small d-block"></span>
+    </div>
+</div>
+
+<div class="form-group mb-3">
+    <label asp-for="Address" class="font-weight-bold text-muted small">Adresa</label>
+    <input asp-for="Address" class="form-control" placeholder="Upišite adresu..." />
+</div>
+
+<div class="row">
+    <div class="col-md-6 form-group mb-3">
+        <label asp-for="PartnerNumber" class="font-weight-bold text-muted small">Broj partnera *</label>
+        <input asp-for="PartnerNumber" class="form-control" placeholder="Upišite broj partnera..." />
+        <small class="text-muted">Mora imati točno 20 znamenki.</small>
+        <span asp-validation-for="PartnerNumber" class="text-danger small d-block"></span>
+    </div>
+    <div class="col-md-6 form-group mb-3">
+        <label asp-for="CroatianPIN" class="font-weight-bold text-muted small">OIB</label>
+        <input asp-for="CroatianPIN" class="form-control" placeholder="Upišite OIB..." />
+        <small class="text-muted">Mora imati 11 znamenki.</small>
+        <span asp-validation-for="CroatianPIN" class="text-danger small d-block"></span>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 form-group mb-3">
+        <label asp-for="PartnerTypeId" class="font-weight-bold text-muted small">Tip partnera *</label>
+        <select asp-for="PartnerTypeId" class="form-control custom-select">
+            <option value="">-- Odaberite --</option>
+            @foreach (var type in (IEnumerable<WienerInsurance.Models.PartnerType>)ViewBag.PartnerTypes)
+            {
+                <option value="@type.Id">@type.Name</option>
+            }
+        </select>
+        <span asp-validation-for="PartnerTypeId" class="text-danger small"></span>
+    </div>
+    <div class="col-md-6 form-group mb-3">
+        <label asp-for="GenderId" class="font-weight-bold text-muted small">Spol *</label>
+        <select asp-for="GenderId" class="form-control custom-select">
+            <option value="">-- Odaberite --</option>
+            @foreach (var g in (ViewData["Genders"] as IEnumerable<WienerInsurance.Models.Gender> ?? Enumerable.Empty<WienerInsurance.Models.Gender>()))
+            {
+                <option value="@g.Id">@g.Name</option>
+            }
+        </select>
+        <span asp-validation-for="GenderId" class="text-danger small"></span>
+    </div>
+</div>
+
+<div class="form-group form-check my-3 pl-4">
+    <input asp-for="IsForeign" type="checkbox" class="form-check-input" />
+    <label class="form-check-label font-weight-bold text-secondary small">Partner je strani državljanin</label>
+</div>
+
+<div class="form-group mb-4">
+    <label asp-for="ExternalCode" class="font-weight-bold text-muted small">Vanjska šifra *</label>
+    <input asp-for="ExternalCode" class="form-control" placeholder="10-20 znamenki..." />
+    <small class="text-muted">Mora imati između 10 i 20 znamenki.</small>
+    <span asp-validation-for="ExternalCode" class="text-danger small d-block"></span>
+</div>

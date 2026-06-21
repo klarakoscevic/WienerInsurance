@@ -1,0 +1,150 @@
+﻿@page
+@model WienerInsurance.Pages.IndexModel
+@{
+    ViewData["Title"] = "Popis Partnera";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Popis partnera - Wiener Osiguranje</h2>
+        <a asp-page="/CreatePartner" class="btn btn-primary shadow-sm">Unos novog partnera</a>
+    </div>
+
+    <div class="card bg-light mb-4 shadow-sm border-0">
+        <div class="card-body py-3">
+            <form method="get" class="row g-3 align-items-end font-weight-bold small">
+
+                <div class="col-md-3">
+                    <label for="SearchName" class="form-label text-secondary mb-1">Pretraga po imenu:</label>
+                    <input type="text" asp-for="SearchName" class="form-control form-control-sm" placeholder="Ime ili prezime..." />
+                </div>
+
+                <div class="col-md-2">
+                    <label for="SearchOib" class="form-label text-secondary mb-1">OIB:</label>
+                    <input type="text" asp-for="SearchOib" class="form-control form-control-sm" placeholder="OIB..." maxlength="11" />
+                </div>
+
+                <div class="col-md-3">
+                    <label for="SearchPartnerNumber" class="form-label text-secondary mb-1">Broj partnera:</label>
+                    <input type="text" asp-for="SearchPartnerNumber" class="form-control form-control-sm" placeholder="Broj partnera..." maxlength="20" />
+                </div>
+
+                <div class="col-md-2">
+                    <label for="PartnerType" class="form-label text-secondary mb-1">Tip partnera:</label>
+                    <select asp-for="PartnerType" class="form-select form-select-sm">
+                        <option value="0">-- Svi --</option>
+                        @foreach (var type in Model.PartnerTypes)
+                        {
+                            <option value="@type.Id">@type.Name</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-2 d-flex gap-2">
+                    <button type="submit" class="btn btn-dark btn-sm flex-fill shadow-sm font-weight-bold">Traži</button>
+                    <a asp-page="/Index" class="btn btn-outline-danger btn-sm flex-fill shadow-sm font-weight-bold">Očisti</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover border">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Broj partnera</th>
+                    <th>Puno ime</th>
+                    <th>OIB</th>
+                    <th>Tip partnera</th>
+                    <th>Vrijeme kreiranja</th>
+                    <th>Strani partner</th>
+                    <th>Spol</th>
+                    <th>Akcije</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Partners.Any())
+                {
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-4">Nema pronađenih partnera za zadane kriterije.</td>
+                    </tr>
+                }
+                @foreach (var p in Model.Partners)
+                {
+                    var isNew = Model.NewPartnerId != null && Model.NewPartnerId == p.Id;
+                    var isUpdated = Model.UpdatedPartnerId != null && Model.UpdatedPartnerId == p.Id;
+
+                    <tr id="partner-row-@p.Id" class="@(isNew ? "table-success font-weight-bold" : "") @(isUpdated ? "table-info font-weight-bold" : "")" style="cursor:pointer;" onclick="openDetailsModal(@p.Id, event)">
+                        <td>@p.PartnerNumber</td>
+                        <td>@p.FullName</td>
+                        <td>@p.CroatianPIN</td>
+                        <td>@p.PartnerTypeName</td>
+                        <td>@p.CreatedAtFormatted</td>
+                        <td>@(p.IsForeign ? "Da" : "Ne")</td>
+                        <td>@p.GenderName</td>
+                        <td>
+                            <a asp-page="/CreatePolicy" asp-route-partnerId="@p.Id" class="btn btn-sm btn-outline-success" onclick="event.stopPropagation();">Unos police</a>
+                            <a asp-page="/EditPartner" asp-route-id="@p.Id" class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation();">Uredi</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="detailsModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white d-flex justify-content-between align-items-center">
+                <h5 class="modal-title mb-0">Detalji partnera</h5>
+                <button type="button" id="closeDetailsBtn" class="close text-white ml-auto" data-dismiss="modal" aria-label="Zatvori" style="font-size: 1.5rem; background: none; border: none; opacity: 0.8; cursor: pointer;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <table class="table table-sm table-borderless mb-0">
+                    <tr><th style="width:40%;">Puno ime:</th><td id="detFullName"></td></tr>
+                    <tr><th>Adresa:</th><td id="detAddress"></td></tr>
+                    <tr><th>Broj partnera:</th><td id="detPartnerNumber"></td></tr>
+                    <tr><th>OIB:</th><td id="detOib"></td></tr>
+                    <tr><th>Tip partnera:</th><td id="detType"></td></tr>
+                    <tr><th>Kreiran:</th><td id="detCreatedAt"></td></tr>
+                    <tr><th>Kreirao korisnik:</th><td id="detUser"></td></tr>
+                    <tr><th>Strani partner:</th><td id="detIsForeign"></td></tr>
+                    <tr><th>Vanjska šifra:</th><td id="detExtCode"></td></tr>
+                    <tr><th>Spol:</th><td id="detGender"></td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function openDetailsModal(id, event) {
+            if (event.target.tagName === 'A' || event.target.tagName === 'BUTTON') return;
+
+            $.get(`?handler=Details&id=${id}`, function(data) {
+                $('#detFullName').text(data.fullName);
+                $('#detAddress').text(data.address);
+                $('#detPartnerNumber').text(data.partnerNumber);
+                $('#detOib').text(data.croatianPIN);
+                $('#detType').text(data.partnerTypeName);
+                $('#detCreatedAt').text(data.createdAtFormatted);
+                $('#detUser').text(data.createByUser || '-');
+                $('#detIsForeign').text(data.isForeign ? 'Da' : 'Ne');
+                $('#detExtCode').text(data.externalCode);
+                $('#detGender').text(data.genderName);
+                $('#detailsModal').modal('show');
+            });
+        }
+
+        $(document).ready(function() {
+            $(document).on('click', '#closeDetailsBtn', function(e) {
+                e.preventDefault();
+                $('#detailsModal').modal('hide');
+            });
+        });
+    </script>
+}

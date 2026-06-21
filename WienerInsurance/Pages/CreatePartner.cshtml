@@ -1,0 +1,29 @@
+﻿@page
+@model WienerInsurance.Pages.CreatePartnerModel
+@{
+    ViewData["Title"] = "Novi Partner";
+}
+
+<div class="container-fluid mt-4 px-md-5">
+    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+        <h2 class="text-secondary font-weight-bold">Unos novog partnera</h2>
+        <span class="text-danger small font-weight-bold">* Polja su obavezna</span>
+    </div>
+
+    <form method="post" class="needs-validation" novalidate>
+        @{
+            ViewData.TemplateInfo.HtmlFieldPrefix = nameof(Model.Input);
+        }
+
+        <partial name="_PartnerForm" model="Model.Input" />
+
+        <div class="d-flex justify-content-between border-top pt-3 mt-4">
+            <a asp-page="/Index" class="btn btn-outline-secondary px-4">Natrag na popis</a>
+            <button type="submit" class="btn btn-primary px-5 font-weight-bold">Spremi partnera</button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

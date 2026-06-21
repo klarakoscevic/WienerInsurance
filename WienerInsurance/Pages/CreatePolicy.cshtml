@@ -1,0 +1,68 @@
+﻿@page
+@model WienerInsurance.Pages.CreatePolicyModel
+@{
+    ViewData["Title"] = "Nova Polica";
+}
+
+<div class="container-fluid mt-4 px-md-5">
+
+    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+        <div>
+            <h2 class="text-secondary font-weight-bold">Unos nove police</h2>
+            <div class="text-muted small mt-1">
+                Kreirate policu za partnera: <strong class="text-dark">@Model.PartnerFullName</strong> (@Model.PartnerNumber)
+            </div>
+        </div>
+        <span class="text-danger small font-weight-bold">* Polja su obavezna</span>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger mb-4">@Model.ErrorMessage</div>
+    }
+
+    <form method="post" class="needs-validation" novalidate style="max-width: 800px;">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+        <input type="hidden" asp-for="Policy.PartnerId" />
+
+        <div class="row">
+            <div class="col-md-6 form-group mb-3">
+                <label asp-for="Policy.PolicyNumber" class="font-weight-bold text-muted small">Broj police *</label>
+                <input asp-for="Policy.PolicyNumber" class="form-control" required minlength="10" maxlength="15" placeholder="Npr. POL-12345678" />
+                <div class="invalid-feedback">Broj police (10-15 znakova) je obavezan.</div>
+            </div>
+
+            <div class="col-md-6 form-group mb-3">
+                <label asp-for="Policy.Amount" class="font-weight-bold text-muted small">Iznos police (€) *</label>
+                <input asp-for="Policy.Amount" class="form-control" type="number" step="0.01" min="0.01" required placeholder="0.00" />
+                <div class="invalid-feedback">Iznos mora biti veći od 0.</div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between border-top pt-3 mt-4">
+            <a asp-page="/Index" class="btn btn-outline-secondary px-4">Odustani</a>
+            <button type="submit" class="btn btn-primary px-5 font-weight-bold">Spremi policu</button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        (function() {
+            'use strict';
+            window.addEventListener('load', function() {
+                var forms = document.getElementsByClassName('needs-validation');
+                Array.prototype.filter.call(forms, function(form) {
+                    form.addEventListener('submit', function(event) {
+                        if (form.checkValidity() === false) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                        }
+                        form.classList.add('was-validated');
+                    }, false);
+                });
+            }, false);
+        })();
+    </script>
+}
