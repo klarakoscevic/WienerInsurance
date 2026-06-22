@@ -1,0 +1,59 @@
+﻿@page
+@model WienerInsurance.Pages.Account.LoginModel
+@{
+    ViewData["Title"] = "Prijava";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4">
+                    <h2 class="text-secondary font-weight-bold mb-4 text-center">Prijava u sustav</h2>
+
+                    <form method="post" class="needs-validation" novalidate>
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger small"></div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="Email" class="font-weight-bold text-muted small">Email</label>
+                            <input asp-for="Email" class="form-control" placeholder="Upišite vaš email..." />
+                            <span asp-validation-for="Email" class="text-danger small d-block"></span>
+                        </div>
+
+                        <div class="form-group mb-4">
+                            <label asp-for="Password" class="font-weight-bold text-muted small">Lozinka</label>
+                            <input asp-for="Password" type="password" class="form-control" placeholder="Upišite vašu lozinku..." />
+                            <span asp-validation-for="Password" class="text-danger small d-block"></span>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-block font-weight-bold shadow-sm">Prijavi se</button>
+                    </form>
+                </div>
+                <div class="card-footer text-center bg-white border-0 pb-4">
+                    <p class="text-muted small">
+                        Kontaktirajte administratora za otvaranje računa:<br />
+                        @if (Model.AdminEmails != null && Model.AdminEmails.Any())
+                        {
+                            <span class="font-weight-bold">
+                                @for (int i = 0; i < Model.AdminEmails.Count(); i++)
+                                {
+                                    var email = Model.AdminEmails.ElementAt(i);
+                                    <a href="mailto:@email">@email</a>
+                                    @(i < Model.AdminEmails.Count() - 1 ? ", " : "")
+                                }
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="text-danger">Trenutno nema aktivnih administratora.</span>
+                        }
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

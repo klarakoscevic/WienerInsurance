@@ -31,7 +31,7 @@
 
                 <div class="col-md-2">
                     <label for="PartnerType" class="form-label text-secondary mb-1">Tip partnera:</label>
-                    <select asp-for="PartnerType" class="form-select form-select-sm">
+                    <select asp-for="PartnerType" class="form-control form-control-sm">
                         <option value="0">-- Svi --</option>
                         @foreach (var type in Model.PartnerTypes)
                         {

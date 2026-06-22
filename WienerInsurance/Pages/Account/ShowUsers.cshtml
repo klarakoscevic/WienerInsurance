@@ -1,0 +1,67 @@
+@page
+@model WienerInsurance.Pages.Account.ShowUsersModel
+@{
+    ViewData["Title"] = "Popis korisnika";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+        <h2 class="text-secondary font-weight-bold">Popis svih korisnika</h2>
+        <a asp-page="/Account/CreateUser" class="btn btn-primary shadow-sm font-weight-bold">Dodaj novog korisnika</a>
+    </div>
+
+    <div class="card bg-light mb-4 shadow-sm border-0">
+        <div class="card-body py-3">
+            <form method="get" class="row align-items-end font-weight-bold small">
+
+                <div class="col-md-3">
+                    <label for="RoleId" class="text-secondary mb-1">Tip role:</label>
+                    <select asp-for="RoleId" class="form-control form-control-sm">
+                        <option value="0">-- Svi --</option>
+                        @foreach (var role in Model.Roles)
+                        {
+                            <option value="@role.Id">@role.Name</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-2 d-flex gap-2">
+                    <button type="submit" class="btn btn-dark btn-sm flex-fill shadow-sm font-weight-bold">Traži</button>
+                    <a asp-page="/Admin/ShowUsers" class="btn btn-outline-danger btn-sm flex-fill shadow-sm font-weight-bold">Očisti</a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover border">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Ime i prezime</th>
+                    <th>Email</th>
+                    <th>Rola</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Users == null || !Model.Users.Any())
+                {
+                    <tr>
+                        <td colspan="3" class="text-center text-muted py-4">Nema pronađenih korisnika.</td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var u in Model.Users)
+                    {
+                        <tr>
+                            <td>@u.FullName</td>
+                            <td>@u.Email</td>
+                            <td>@u.RoleName</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
