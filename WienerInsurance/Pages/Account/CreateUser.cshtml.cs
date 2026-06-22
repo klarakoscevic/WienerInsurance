@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using WienerInsurance.Models;
+using WienerInsurance.ViewModels;
 
 namespace WienerInsurance.Pages.Account
 {
@@ -13,12 +14,8 @@ namespace WienerInsurance.Pages.Account
         private readonly UserRepository _repo;
         public CreateUserModel(UserRepository repo) => _repo = repo;
 
-        [BindProperty] public string Email { get; set; }
-        [BindProperty] public string FirstName { get; set; }
-        [BindProperty] public string LastName { get; set; }
-        [BindProperty] public string Password { get; set; }
-        [BindProperty] public int RoleId { get; set; }
-
+       
+        [BindProperty] public UserInputViewModel Input { get; set; }
         public IEnumerable<UserRole> Roles { get; set; }
 
         public async Task OnGetAsync()
@@ -28,24 +25,30 @@ namespace WienerInsurance.Pages.Account
 
         public async Task<IActionResult> OnPostAsync()
         {
-            var existing = await _repo.GetUserByEmailAsync(Email);
+            var existing = await _repo.GetUserByEmailAsync(Input.Email);
             if (existing != null)
             {
-                ModelState.AddModelError("", "User with this email already exists.");
+                ModelState.AddModelError("Input.Email", "Postoji korisnik s ovom email adresom");
+                Roles = await _repo.GetAllRolesAsync();
+                return Page();
+            }
+
+            if (!ModelState.IsValid)
+            {
                 Roles = await _repo.GetAllRolesAsync();
                 return Page();
             }
 
             var hasher = new PasswordHasher<string>();
-            var hash = hasher.HashPassword(null, Password);
+            var hash = hasher.HashPassword(null, Input.Password);
 
             var user = new User
             {
-                Email = Email,
-                FirstName = FirstName,
-                LastName = LastName,
+                Email = Input.Email,
+                FirstName = Input.FirstName,
+                LastName = Input.LastName,
                 PasswordHash = hash,
-                RoleId = RoleId
+                RoleId = Input.RoleId
             };
 
             var id = await _repo.CreateUserAsync(user);

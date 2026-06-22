@@ -1,27 +1,27 @@
 @page
-@model WienerInsurance.Pages.Account.CreateUserModel
+@model WienerInsurance.Pages.Account.EditUserModel
 @{
-    ViewData["Title"] = "Dodaj korisnika";
+    ViewData["Title"] = "Uredi korisnika";
 }
 
 <div class="container-fluid mt-4 px-md-5">
     <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
-        <h2 class="text-secondary font-weight-bold">Dodavanje novog korisnika</h2>
+        <h2 class="text-secondary font-weight-bold">Uređivanje korisnika</h2>
     </div>
 
     <form method="post" class="needs-validation" novalidate>
         <div asp-validation-summary="ModelOnly" class="alert alert-danger small"></div>
+        <input type="hidden" asp-for="Input.Id" />
+        <input type="hidden" asp-for="Input.OriginalEmail" />
 
         <div class="row">
             <div class="col-md-6 form-group mb-3">
                 <label asp-for="Input.FirstName" class="font-weight-bold text-muted small">Ime *</label>
                 <input asp-for="Input.FirstName" class="form-control" />
-                <span asp-validation-for="Input.FirstName" class="text-danger small"></span>
             </div>
             <div class="col-md-6 form-group mb-3">
                 <label asp-for="Input.LastName" class="font-weight-bold text-muted small">Prezime *</label>
                 <input asp-for="Input.LastName" class="form-control" />
-                <span asp-validation-for="Input.LastName" class="text-danger small"></span>
             </div>
         </div>
 
@@ -32,31 +32,27 @@
                 <span asp-validation-for="Input.Email" class="text-danger small"></span>
             </div>
             <div class="col-md-6 form-group mb-3">
-                <label asp-for="Input.Password" class="font-weight-bold text-muted small">Lozinka *</label>
-                <input asp-for="Input.Password" class="form-control" />
-                <span asp-validation-for="Input.Password" class="text-danger small"></span>
+                <label asp-for="Input.Password" class="font-weight-bold text-muted small">Nova lozinka</label>
+                <input asp-for="Input.Password" class="form-control" placeholder="Upišite samo ako želite promijeniti..." />
             </div>
         </div>
 
-        <div class="form-group mb-4">
-            <label asp-for="Input.RoleId" class="font-weight-bold text-muted small">Uloga *</label>
-            <select asp-for="Input.RoleId" class="form-control">
-                <option value="0">-- Odaberite --</option>
-                @foreach (var r in Model.Roles)
-                {
-                    <option value="@r.Id">@r.Name</option>
-                }
-            </select>
-            <span asp-validation-for="Input.RoleId" class="text-danger small"></span>
-        </div>
+        @if (User.IsInRole("Admin"))
+        {
+            <div class="form-group mb-4">
+                <label asp-for="Input.RoleId" class="font-weight-bold text-muted small">Uloga / Rola *</label>
+                <select asp-for="Input.RoleId" class="form-control custom-select">
+                    @foreach (var r in Model.Roles)
+                    {
+                        <option value="@r.Id">@r.Name</option>
+                    }
+                </select>
+            </div>
+        }
 
         <div class="d-flex justify-content-between border-top pt-3 mt-4">
             <a asp-page="/Account/ShowUsers" class="btn btn-outline-secondary px-4">Odustani</a>
-            <button type="submit" class="btn btn-primary px-5 font-weight-bold">Spremi</button>
+            <button type="submit" class="btn btn-primary px-5 font-weight-bold">Spremi izmjene</button>
         </div>
     </form>
 </div>
-
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-}

@@ -30,11 +30,6 @@ public class UserRepository
         return await db.ExecuteScalarAsync<int>(sql, user);
     }
 
-    public async Task<UserRole> GetRoleByNameAsync(string name)
-    {
-        using var db = new SqlConnection(_conn);
-        return await db.QueryFirstOrDefaultAsync<UserRole>("SELECT * FROM UserRoles WHERE Name = @Name", new { Name = name });
-    }
 
     public async Task<IEnumerable<UserRole>> GetAllRolesAsync()
     {
@@ -53,5 +48,18 @@ public class UserRepository
         WHERE r.Name = 'Admin'"; 
 
         return await db.QueryAsync<string>(sql);
+    }
+
+    public async Task<User> GetUserByIdAsync(int id)
+    {
+        using var db = new SqlConnection(_conn);
+        return await db.QueryFirstOrDefaultAsync<User>("SELECT * FROM Users WHERE Id = @Id", new { Id = id });
+    }
+
+    public async Task UpdateUserAsync(User user)
+    {
+        using var db = new SqlConnection(_conn);
+        var sql = @"UPDATE Users SET Email = @Email, FirstName = @FirstName, LastName = @LastName, PasswordHash = @PasswordHash, RoleId = @RoleId WHERE Id = @Id";
+        await db.ExecuteAsync(sql, user);
     }
 }

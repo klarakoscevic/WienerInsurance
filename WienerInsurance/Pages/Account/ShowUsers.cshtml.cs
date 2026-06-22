@@ -31,6 +31,7 @@ namespace WienerInsurance.Pages.Account
 
             Users = allUsers.Select(u => new UserDisplayViewModel
             {
+                Id = u.Id,
                 Email = u.Email,
                 FullName = $"{u.FirstName} {u.LastName}",
                 RoleName = Roles.FirstOrDefault(g => g.Id == u.RoleId)?.Name

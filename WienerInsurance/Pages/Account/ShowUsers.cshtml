@@ -41,13 +41,14 @@
                     <th>Ime i prezime</th>
                     <th>Email</th>
                     <th>Rola</th>
+                    <th class="text-end">Akcije</th>
                 </tr>
             </thead>
             <tbody>
                 @if (Model.Users == null || !Model.Users.Any())
                 {
                     <tr>
-                        <td colspan="3" class="text-center text-muted py-4">Nema pronađenih korisnika.</td>
+                        <td colspan="4" class="text-center text-muted py-4">Nema pronađenih korisnika.</td>
                     </tr>
                 }
                 else
@@ -58,6 +59,9 @@
                             <td>@u.FullName</td>
                             <td>@u.Email</td>
                             <td>@u.RoleName</td>
+                            <td class="text-end">
+                                <a asp-page="/Account/EditUser" asp-route-id="@u.Id" class="btn btn-sm btn-outline-primary">Uredi</a>
+                            </td>
                         </tr>
                     }
                 }
