@@ -4,30 +4,38 @@
     ViewData["Title"] = "Popis korisnika";
 }
 
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
-        <h2 class="text-secondary font-weight-bold">Popis svih korisnika</h2>
-        <a asp-page="/Account/CreateUser" class="btn btn-primary shadow-sm font-weight-bold">Dodaj novog korisnika</a>
+<div class="container-fluid mt-4 px-md-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Popis korisnika</h2>
+        <a asp-page="/Account/CreateUser" class="btn btn-primary shadow-sm">Dodaj novog korisnika</a>
     </div>
 
     <div class="card bg-light mb-4 shadow-sm border-0">
         <div class="card-body py-3">
-            <form method="get" class="row align-items-end font-weight-bold small">
+            <form method="get" class="font-weight-bold small">
 
-                <div class="col-md-3">
-                    <label for="RoleId" class="text-secondary mb-1">Tip role:</label>
-                    <select asp-for="RoleId" class="form-control form-control-sm">
-                        <option value="0">-- Svi --</option>
-                        @foreach (var role in Model.Roles)
-                        {
-                            <option value="@role.Id">@role.Name</option>
-                        }
-                    </select>
+                <div class="row g-2 mb-3">
+                    <div class="col-md-3">
+                        <label for="RoleId" class="form-label text-secondary mb-1">Tip role:</label>
+                        <select asp-for="RoleId" class="form-control form-control-sm">
+                            <option value="0">-- Svi --</option>
+                            @foreach (var role in Model.Roles)
+                            {
+                                <option value="@role.Id">@role.Name</option>
+                            }
+                        </select>
+                    </div>
                 </div>
 
-                <div class="col-md-2 d-flex gap-2">
-                    <button type="submit" class="btn btn-dark btn-sm flex-fill shadow-sm font-weight-bold">Traži</button>
-                    <a asp-page="/Admin/ShowUsers" class="btn btn-outline-danger btn-sm flex-fill shadow-sm font-weight-bold">Očisti</a>
+                <div class="row">
+                    <div class="col-12 d-flex justify-content-end align-items-center">
+                        <button type="submit" class="btn btn-dark shadow-sm font-weight-bold px-4" style="min-width: 120px;">
+                            Traži
+                        </button>
+                        <a asp-page="/Account/ShowUsers" class="btn btn-outline-danger shadow-sm font-weight-bold px-4" style="min-width: 120px; margin-left: 15px;">
+                            Očisti
+                        </a>
+                    </div>
                 </div>
 
             </form>
