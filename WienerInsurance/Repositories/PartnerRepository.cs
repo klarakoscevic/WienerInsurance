@@ -19,13 +19,15 @@ namespace WienerInsurance.Repositories
         public async Task<IEnumerable<Partner>> GetAllPartnersAsync()
         {
             var query = @"
-            SELECT p.*, 
+            SELECT p.*, u.Email AS CreatedByUserEmail, mu.Email AS ModifiedByUserEmail,
                    COUNT(po.Id) AS PolicyCount, 
                    ISNULL(SUM(po.Amount), 0) AS TotalPolicyAmount
             FROM Partners p
+            LEFT JOIN Users u ON p.CreatedByUserId = u.Id
+            LEFT JOIN Users mu ON p.ModifiedByUserId = mu.Id
             LEFT JOIN Policies po ON p.Id = po.PartnerId
             GROUP BY p.Id, p.FirstName, p.LastName, p.Address, p.PartnerNumber, 
-                     p.CroatianPIN, p.PartnerTypeId, p.CreatedAtUtc, p.CreateByUser, 
+                     p.CroatianPIN, p.PartnerTypeId, p.CreatedAtUtc, p.CreatedByUserId, p.ModifiedAtUtc, p.ModifiedByUserId, u.Email, mu.Email,
                      p.IsForeign, p.ExternalCode, p.GenderId
             ORDER BY p.CreatedAtUtc DESC";
 
@@ -36,14 +38,16 @@ namespace WienerInsurance.Repositories
         public async Task<Partner> GetPartnerByIdAsync(int id)
         {
             var query = @"
-            SELECT p.*, 
+            SELECT p.*, u.Email AS CreatedByUserEmail, mu.Email AS ModifiedByUserEmail,
                    COUNT(po.Id) AS PolicyCount, 
                    ISNULL(SUM(po.Amount), 0) AS TotalPolicyAmount
             FROM Partners p
+            LEFT JOIN Users u ON p.CreatedByUserId = u.Id
+            LEFT JOIN Users mu ON p.ModifiedByUserId = mu.Id
             LEFT JOIN Policies po ON p.Id = po.PartnerId
             WHERE p.Id = @Id
             GROUP BY p.Id, p.FirstName, p.LastName, p.Address, p.PartnerNumber, 
-                     p.CroatianPIN, p.PartnerTypeId, p.CreatedAtUtc, p.CreateByUser, 
+                     p.CroatianPIN, p.PartnerTypeId, p.CreatedAtUtc, p.CreatedByUserId, p.ModifiedAtUtc, p.ModifiedByUserId, u.Email, mu.Email,
                      p.IsForeign, p.ExternalCode, p.GenderId";
 
             using var conn = Connection;
@@ -54,9 +58,9 @@ namespace WienerInsurance.Repositories
         {
             var query = @"
             INSERT INTO Partners (FirstName, LastName, Address, PartnerNumber, CroatianPIN, 
-                                 PartnerTypeId, CreateByUser, IsForeign, ExternalCode, GenderId)
+                                 PartnerTypeId, CreatedAtUtc, CreatedByUserId, IsForeign, ExternalCode, GenderId)
             VALUES (@FirstName, @LastName, @Address, @PartnerNumber, @CroatianPIN, 
-                    @PartnerTypeId, @CreateByUser, @IsForeign, @ExternalCode, @GenderId)";
+                    @PartnerTypeId, @CreatedAtUtc, @CreatedByUserId, @IsForeign, @ExternalCode, @GenderId)";
 
             using var conn = Connection;
             var rows = await conn.ExecuteAsync(query, partner);
@@ -77,7 +81,7 @@ namespace WienerInsurance.Repositories
           FirstName = @FirstName, LastName = @LastName, Address = @Address, 
           PartnerNumber = @PartnerNumber, CroatianPIN = @CroatianPIN, 
           PartnerTypeId = @PartnerTypeId, IsForeign = @IsForeign, 
-          GenderId = @GenderId 
+          GenderId = @GenderId, ModifiedAtUtc = @ModifiedAtUtc, ModifiedByUserId = @ModifiedByUserId
           WHERE Id = @Id";
             using var conn = Connection;
             await conn.ExecuteAsync(query, p);

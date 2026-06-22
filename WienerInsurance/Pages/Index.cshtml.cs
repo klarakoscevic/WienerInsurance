@@ -19,7 +19,6 @@ namespace WienerInsurance.Pages
         public IEnumerable<PartnerType> PartnerTypes { get; set; }
         public IEnumerable<Gender> Genders { get; set; }
 
-        // Svojstva za pretragu i filtriranje povezujemo kroz GET zahtjev
         [BindProperty(SupportsGet = true)] public string SearchName { get; set; }
         [BindProperty(SupportsGet = true)] public string SearchOib { get; set; }
         [BindProperty(SupportsGet = true)] public string SearchPartnerNumber { get; set; }
@@ -59,7 +58,7 @@ namespace WienerInsurance.Pages
                     CroatianPIN = p.CroatianPIN ?? "-",
                     PartnerTypeName = PartnerTypes.FirstOrDefault(t => t.Id == p.PartnerTypeId)?.Name,
                     CreatedAtFormatted = TimeZoneInfo.ConvertTimeFromUtc(utcDate, TimeZoneInfo.Local).ToString("dd.MM.yyyy HH:mm"),
-                    CreateByUser = p.CreateByUser,
+                    CreatedByUserEmail = p.CreatedByUserEmail,
                     IsForeign = p.IsForeign,
                     ExternalCode = p.ExternalCode,
                     GenderName = genders.FirstOrDefault(g => g.Id == p.GenderId)?.Name,
@@ -87,7 +86,7 @@ namespace WienerInsurance.Pages
                 CroatianPIN = partner.CroatianPIN ?? "-",
                 PartnerTypeName = types.FirstOrDefault(t => t.Id == partner.PartnerTypeId)?.Name,
                 CreatedAtFormatted = TimeZoneInfo.ConvertTimeFromUtc(partner.CreatedAtUtc, TimeZoneInfo.Local).ToString("dd.MM.yyyy HH:mm"),
-                CreateByUser = partner.CreateByUser ?? "-",
+                CreatedByUserEmail = partner.CreatedByUserEmail ?? "-",
                 IsForeign = partner.IsForeign,
                 ExternalCode = partner.ExternalCode,
                 GenderName = genders.FirstOrDefault(g => g.Id == partner.GenderId)?.Name

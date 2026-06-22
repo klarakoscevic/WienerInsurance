@@ -9,7 +9,7 @@
         public string CroatianPIN { get; set; }
         public string PartnerTypeName { get; set; } 
         public string CreatedAtFormatted { get; set; }
-        public string CreateByUser { get; set; }
+        public string CreatedByUserEmail { get; set; }
         public bool IsForeign { get; set; }
         public string ExternalCode { get; set; }
         public string GenderName { get; set; }

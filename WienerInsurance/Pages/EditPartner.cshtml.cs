@@ -11,7 +11,12 @@ namespace WienerInsurance.Pages
     public class EditPartnerModel : PageModel
     {
         private readonly PartnerRepository _repo;
-        public EditPartnerModel(PartnerRepository repo) => _repo = repo;
+        private readonly UserRepository _userRepo;
+        public EditPartnerModel(PartnerRepository repo, UserRepository userRepo)
+        {
+            _repo = repo;
+            _userRepo = userRepo;
+        }
 
         [BindProperty] public PartnerInputViewModel Input { get; set; }
 
@@ -40,20 +45,12 @@ namespace WienerInsurance.Pages
 
         public async Task<IActionResult> OnPostAsync(int id)
         {
-
-            //ModelState.Remove("Partner.CreateByUser");
-            //ModelState.Remove("Partner.CreatedAtUtc");
-
             var partner = await _repo.GetPartnerByIdAsync(id);
 
             if (partner.ExternalCode != Input.ExternalCode && !await _repo.IsExternalCodeUniqueAsync(Input.ExternalCode))
             {
                 ModelState.AddModelError("Input.ExternalCode", "Navedena Vanjska šifra već postoji.");
             }
-
-            //Partner.Id = id;
-            //Partner.CreateByUser = existing.CreateByUser;
-            //Partner.CreatedAtUtc = existing.CreatedAtUtc;
 
             if (!ModelState.IsValid)
             {
@@ -63,8 +60,7 @@ namespace WienerInsurance.Pages
 
                 return Page();
             }
-            //var partner = await _repo.GetPartnerByIdAsync(id);
-            // Mapiranje
+
             partner.FirstName = Input.FirstName;
             partner.LastName = Input.LastName;
             partner.Address = Input.Address;
@@ -75,7 +71,13 @@ namespace WienerInsurance.Pages
             partner.IsForeign = Input.IsForeign;
             partner.ExternalCode = Input.ExternalCode;
 
-            var success = await _repo.CreatePartnerAsync(partner);
+            var email = User?.Identity?.Name;
+            var user = email != null ? await _userRepo.GetUserByEmailAsync(email) : null;
+            partner.ModifiedAtUtc = DateTime.UtcNow;
+            partner.ModifiedByUserId = user?.Id;
+
+            await _repo.UpdatePartnerAsync(partner);
+            var success = true;
             if (success)
             {
                 return RedirectToPage("/Index");

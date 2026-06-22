@@ -13,13 +13,19 @@ namespace WienerInsurance.Models
         public string PartnerNumber { get; set; }
         public string? CroatianPIN { get; set; }
        public int PartnerTypeId { get; set; }
-        public DateTime CreatedAtUtc { get; set; }       
-        public string CreateByUser { get; set; }
+        public DateTime CreatedAtUtc { get; set; }
+        public int CreatedByUserId { get; set; }
+        public DateTime? ModifiedAtUtc { get; set; }
+        public int? ModifiedByUserId { get; set; }
         public bool IsForeign { get; set; }
         public string ExternalCode { get; set; }
         public int GenderId { get; set; }
 
         [NotMapped]
         public string FullName => $"{FirstName} {LastName}";
+        [NotMapped]
+        public string CreatedByUserEmail { get; set; }
+        [NotMapped]
+        public string ModifiedByUserEmail { get; set; }
     }
 }

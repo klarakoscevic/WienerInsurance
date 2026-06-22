@@ -11,7 +11,13 @@ namespace WienerInsurance.Pages
     public class CreatePartnerModel : PageModel
     {
         private readonly PartnerRepository _repo;
-        public CreatePartnerModel(PartnerRepository repo) => _repo = repo;
+        private readonly UserRepository _userRepo;
+        public CreatePartnerModel(PartnerRepository repo, UserRepository userRepo)
+        {
+            _repo = repo;
+            _userRepo = userRepo;
+        }
+
         [BindProperty] public PartnerInputViewModel Input { get; set; }
 
         public async Task OnGetAsync()
@@ -22,14 +28,12 @@ namespace WienerInsurance.Pages
 
         public async Task<IActionResult> OnPostAsync()
         {
-            // remove validadtion for props not comming from form
-            ModelState.Remove("Partner.CreateByUser");
-            ModelState.Remove("Partner.CreatedAtUtc");
-
-
             if (!await _repo.IsExternalCodeUniqueAsync(Input.ExternalCode))
             {
                 ModelState.AddModelError("Input.ExternalCode", "Navedena Vanjska šifra već postoji.");
+                ViewData["PartnerTypes"] = await _repo.GetPartnerTypesAsync();
+                ViewData["Genders"] = await _repo.GetGendersAsync();
+                return Page();
             }
 
             if (!ModelState.IsValid)
@@ -51,9 +55,12 @@ namespace WienerInsurance.Pages
                 GenderId = Input.GenderId,
                 IsForeign = Input.IsForeign,
                 ExternalCode = Input.ExternalCode,
-                CreateByUser = "agent.osiguranja@wiener.hr",
-                CreatedAtUtc = DateTime.UtcNow
             };
+
+            var email = User?.Identity?.Name;
+            var user = email != null ? await _userRepo.GetUserByEmailAsync(email) : null;
+            partner.CreatedByUserId = user?.Id ?? 1; // fallback to system user
+            partner.CreatedAtUtc = DateTime.UtcNow;
 
             var success = await _repo.CreatePartnerAsync(partner);
             if (success)
