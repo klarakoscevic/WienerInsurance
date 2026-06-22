@@ -132,4 +132,15 @@
         });
         });
     </script>
+    <script>
+        // Auto-hide top alerts after 5 seconds
+        $(function() {
+            var alerts = $('.container-fluid .alert');
+            if (alerts.length) {
+                setTimeout(function() {
+                    alerts.fadeOut(500, function() { $(this).remove(); });
+                }, 5000);
+            }
+        });
+    </script>
 }

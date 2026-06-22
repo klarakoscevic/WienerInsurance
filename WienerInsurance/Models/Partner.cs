@@ -17,6 +17,7 @@ namespace WienerInsurance.Models
         public int CreatedByUserId { get; set; }
         public DateTime? ModifiedAtUtc { get; set; }
         public int? ModifiedByUserId { get; set; }
+        public bool IsActive { get; set; } = true;
         public bool IsForeign { get; set; }
         public string ExternalCode { get; set; }
         public int GenderId { get; set; }

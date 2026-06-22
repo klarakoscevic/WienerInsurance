@@ -13,5 +13,6 @@
         public bool IsForeign { get; set; }
         public string ExternalCode { get; set; }
         public string GenderName { get; set; }
+        public bool IsActive { get; set; }
     }
 }

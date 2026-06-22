@@ -10,6 +10,15 @@
         <a asp-page="/CreatePartner" class="btn btn-primary shadow-sm">Unos novog partnera</a>
     </div>
 
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success mb-4">@TempData["Success"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger mb-4">@TempData["Error"]</div>
+    }
+
     <div class="card bg-light mb-4 shadow-sm border-0">
         <div class="card-body py-3">
             <form method="get" class="row g-3 align-items-end font-weight-bold small">
@@ -37,6 +46,15 @@
                         {
                             <option value="@type.Id">@type.Name</option>
                         }
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <label for="StatusFilter" class="form-label text-secondary mb-1">Status:</label>
+                    <select asp-for="StatusFilter" class="form-control form-control-sm">
+                        <option value="active">Aktivni</option>
+                        <option value="all">Sve</option>
+                        <option value="inactive">Neaktivni</option>
                     </select>
                 </div>
 
@@ -75,7 +93,13 @@
                     var isUpdated = Model.UpdatedPartnerId != null && Model.UpdatedPartnerId == p.Id;
 
                     <tr id="partner-row-@p.Id" class="@(isNew ? "table-success font-weight-bold" : "") @(isUpdated ? "table-info font-weight-bold" : "")" style="cursor:pointer;" onclick="openDetailsModal(@p.Id, event)">
-                        <td>@p.PartnerNumber</td>
+                        <td>
+                            @p.PartnerNumber
+                            @if (!p.IsActive)
+                            {
+                                <span class="badge bg-danger ms-2">Neaktivan</span>
+                            }
+                        </td>
                         <td>@p.FullName</td>
                         <td>@p.CroatianPIN</td>
                         <td>@p.PartnerTypeName</td>
@@ -83,8 +107,30 @@
                         <td>@(p.IsForeign ? "Da" : "Ne")</td>
                         <td>@p.GenderName</td>
                         <td>
-                            <a asp-page="/CreatePolicy" asp-route-partnerId="@p.Id" class="btn btn-sm btn-outline-success" onclick="event.stopPropagation();">Unos police</a>
-                            <a asp-page="/EditPartner" asp-route-id="@p.Id" class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation();">Uredi</a>
+                            @if (p.IsActive)
+                            {
+                                <a asp-page="/CreatePolicy" asp-route-partnerId="@p.Id" class="btn btn-sm btn-outline-success" onclick="event.stopPropagation();">Unos police</a>
+                                <a asp-page="/EditPartner" asp-route-id="@p.Id" class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation();">Uredi</a>
+                                <form method="post" asp-page-handler="Delete" asp-route-id="@p.Id" style="display:inline-block;" onsubmit="event.stopPropagation(); return confirm('Jeste li sigurni da želite obrisati partnera?');">
+                                    <input type="hidden" asp-for="StatusFilter" />
+                                    <input type="hidden" asp-for="SearchName" />
+                                    <input type="hidden" asp-for="SearchOib" />
+                                    <input type="hidden" asp-for="SearchPartnerNumber" />
+                                    <input type="hidden" asp-for="PartnerType" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Obriši</button>
+                                </form>
+                            }
+                            else
+                            {
+                                <form method="post" asp-page-handler="Restore" asp-route-id="@p.Id" style="display:inline-block;" onsubmit="event.stopPropagation(); return confirm('Jeste li sigurni da želite aktivirati partnera?');">
+                                    <input type="hidden" asp-for="StatusFilter" />
+                                    <input type="hidden" asp-for="SearchName" />
+                                    <input type="hidden" asp-for="SearchOib" />
+                                    <input type="hidden" asp-for="SearchPartnerNumber" />
+                                    <input type="hidden" asp-for="PartnerType" />
+                                    <button type="submit" class="btn btn-sm btn-outline-success">Aktiviraj</button>
+                                </form>
+                            }
                         </td>
                     </tr>
                 }
@@ -97,7 +143,7 @@
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
             <div class="modal-header bg-info text-white d-flex justify-content-between align-items-center">
-                <h5 class="modal-title mb-0">Detalji partnera</h5>
+                <h5 class="modal-title mb-0">Detalji partnera <span id="detStatus"></span></h5>
                 <button type="button" id="closeDetailsBtn" class="close text-white ml-auto" data-dismiss="modal" aria-label="Zatvori" style="font-size: 1.5rem; background: none; border: none; opacity: 0.8; cursor: pointer;">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -136,6 +182,11 @@
                 $('#detIsForeign').text(data.isForeign ? 'Da' : 'Ne');
                 $('#detExtCode').text(data.externalCode);
                 $('#detGender').text(data.genderName);
+                // Show badge next to title if inactive
+                $('#detStatus').html('');
+                if (data.isActive === false) {
+                    $('#detStatus').html('<span class="badge bg-danger ms-2">Neaktivan</span>');
+                }
                 $('#detailsModal').modal('show');
             });
         }
@@ -145,6 +196,17 @@
                 e.preventDefault();
                 $('#detailsModal').modal('hide');
             });
+        });
+    </script>
+    <script>
+        // Auto-hide top alerts after 5 seconds
+        $(function() {
+            var alerts = $('.container .alert');
+            if (alerts.length) {
+                setTimeout(function() {
+                    alerts.fadeOut(500, function() { $(this).remove(); });
+                }, 5000);
+            }
         });
     </script>
 }

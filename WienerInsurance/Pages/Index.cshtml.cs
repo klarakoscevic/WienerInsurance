@@ -9,10 +9,46 @@ namespace WienerInsurance.Pages
     public class IndexModel : PageModel
     {
         private readonly PartnerRepository _repo;
-
-        public IndexModel(PartnerRepository repo)
+        private readonly UserRepository _userRepo;
+        public IndexModel(PartnerRepository repo, UserRepository userRepo)
         {
             _repo = repo;
+            _userRepo = userRepo;
+        }
+
+        public async Task<IActionResult> OnPostDeleteAsync(int id)
+        {
+            var email = User?.Identity?.Name;
+            var user = email != null ? await _userRepo.GetUserByEmailAsync(email) : null;
+
+            var success = await _repo.SoftDeletePartnerAsync(id, DateTime.UtcNow, user?.Id ?? 1);
+            if (success)
+            {
+                TempData["Success"] = "Partner je uspješno obrisan.";
+            }
+            else
+            {
+                TempData["Error"] = "Greška pri brisanju partnera.";
+            }
+
+            return RedirectToPage(new { StatusFilter = StatusFilter, SearchName = SearchName, SearchOib = SearchOib, SearchPartnerNumber = SearchPartnerNumber, PartnerType = PartnerType });
+        }
+
+        public async Task<IActionResult> OnPostRestoreAsync(int id)
+        {
+            var email = User?.Identity?.Name;
+            var user = email != null ? await _userRepo.GetUserByEmailAsync(email) : null;
+            var success = await _repo.RestorePartnerAsync(id, DateTime.UtcNow, user?.Id ?? 1);
+            if (success)
+            {
+                TempData["Success"] = "Partner je ponovno aktiviran.";
+            }
+            else
+            {
+                TempData["Error"] = "Greška pri aktiviranju partnera.";
+            }
+
+            return RedirectToPage(new { StatusFilter = StatusFilter, SearchName = SearchName, SearchOib = SearchOib, SearchPartnerNumber = SearchPartnerNumber, PartnerType = PartnerType });
         }
 
         public IEnumerable<PartnerViewModel> Partners { get; set; }
@@ -23,6 +59,7 @@ namespace WienerInsurance.Pages
         [BindProperty(SupportsGet = true)] public string SearchOib { get; set; }
         [BindProperty(SupportsGet = true)] public string SearchPartnerNumber { get; set; }
         [BindProperty(SupportsGet = true)] public int? PartnerType { get; set; }
+        [BindProperty(SupportsGet = true)] public string StatusFilter  { get; set; } = "active"; // active, all, inactive
 
         [BindProperty(SupportsGet = true)] public int? NewPartnerId { get; set; }
         [BindProperty(SupportsGet = true)] public int? UpdatedPartnerId { get; set; }
@@ -31,7 +68,29 @@ namespace WienerInsurance.Pages
         {
             PartnerTypes = await _repo.GetPartnerTypesAsync();
             var genders = await _repo.GetGendersAsync();
+            bool? isActiveFilter = true;
+            if (!string.IsNullOrEmpty(StatusFilter))
+            {
+                switch (StatusFilter.ToLowerInvariant())
+                {
+                    case "all":
+                        isActiveFilter = null;
+                        break;
+                    case "inactive":
+                        isActiveFilter = false;
+                        break;
+                    default:
+                        isActiveFilter = true; 
+                        break;
+                }
+            }
+
             var allPartners = await _repo.GetAllPartnersAsync();
+
+            if (isActiveFilter.HasValue)
+            {
+                allPartners = allPartners.Where(p => (p.IsActive) == isActiveFilter.Value);
+            }
 
             if (!string.IsNullOrEmpty(SearchName))
                 allPartners = allPartners.Where(p => p.FirstName.Contains(SearchName, StringComparison.OrdinalIgnoreCase) || p.LastName.Contains(SearchName, StringComparison.OrdinalIgnoreCase));
@@ -62,6 +121,7 @@ namespace WienerInsurance.Pages
                     IsForeign = p.IsForeign,
                     ExternalCode = p.ExternalCode,
                     GenderName = genders.FirstOrDefault(g => g.Id == p.GenderId)?.Name,
+                    IsActive = p.IsActive
                 };
             }).ToList();
         }
@@ -89,7 +149,8 @@ namespace WienerInsurance.Pages
                 CreatedByUserEmail = partner.CreatedByUserEmail ?? "-",
                 IsForeign = partner.IsForeign,
                 ExternalCode = partner.ExternalCode,
-                GenderName = genders.FirstOrDefault(g => g.Id == partner.GenderId)?.Name
+                GenderName = genders.FirstOrDefault(g => g.Id == partner.GenderId)?.Name,
+                IsActive = partner.IsActive
             });
         }
     }

@@ -18,6 +18,7 @@ namespace WienerInsurance.Repositories
 
         public async Task<IEnumerable<Partner>> GetAllPartnersAsync()
         {
+            // default returns only active partners
             var query = @"
             SELECT p.*, u.Email AS CreatedByUserEmail, mu.Email AS ModifiedByUserEmail,
                    COUNT(po.Id) AS PolicyCount, 
@@ -26,9 +27,9 @@ namespace WienerInsurance.Repositories
             LEFT JOIN Users u ON p.CreatedByUserId = u.Id
             LEFT JOIN Users mu ON p.ModifiedByUserId = mu.Id
             LEFT JOIN Policies po ON p.Id = po.PartnerId
-            GROUP BY p.Id, p.FirstName, p.LastName, p.Address, p.PartnerNumber, 
+            GROUP BY p.Id, p.FirstName, p.LastName, p.Address, p.PartnerNumber,
                      p.CroatianPIN, p.PartnerTypeId, p.CreatedAtUtc, p.CreatedByUserId, p.ModifiedAtUtc, p.ModifiedByUserId, u.Email, mu.Email,
-                     p.IsForeign, p.ExternalCode, p.GenderId
+                     p.IsForeign, p.ExternalCode, p.GenderId, p.IsActive
             ORDER BY p.CreatedAtUtc DESC";
 
             using var conn = Connection;
@@ -48,10 +49,32 @@ namespace WienerInsurance.Repositories
             WHERE p.Id = @Id
             GROUP BY p.Id, p.FirstName, p.LastName, p.Address, p.PartnerNumber, 
                      p.CroatianPIN, p.PartnerTypeId, p.CreatedAtUtc, p.CreatedByUserId, p.ModifiedAtUtc, p.ModifiedByUserId, u.Email, mu.Email,
-                     p.IsForeign, p.ExternalCode, p.GenderId";
+                     p.IsForeign, p.ExternalCode, p.GenderId, p.IsActive";
 
             using var conn = Connection;
             return await conn.QueryFirstOrDefaultAsync<Partner>(query, new { Id = id });
+        }
+
+        public async Task<bool> SoftDeletePartnerAsync(int id, DateTime modifiedAtUtc, int? modifiedByUserId)
+        {
+            var query = @"
+                UPDATE Partners SET IsActive = 0, ModifiedAtUtc = @ModifiedAtUtc, ModifiedByUserId = @ModifiedByUserId
+                WHERE Id = @Id";
+
+            using var conn = Connection;
+            var rows = await conn.ExecuteAsync(query, new { Id = id, ModifiedAtUtc = modifiedAtUtc, ModifiedByUserId = modifiedByUserId });
+            return rows > 0;
+        }
+
+        public async Task<bool> RestorePartnerAsync(int id, DateTime modifiedAtUtc, int? modifiedByUserId)
+        {
+            var query = @"
+                UPDATE Partners SET IsActive = 1, ModifiedAtUtc = @ModifiedAtUtc, ModifiedByUserId = @ModifiedByUserId
+                WHERE Id = @Id";
+
+            using var conn = Connection;
+            var rows = await conn.ExecuteAsync(query, new { Id = id, ModifiedAtUtc = modifiedAtUtc, ModifiedByUserId = modifiedByUserId });
+            return rows > 0;
         }
 
         public async Task<bool> CreatePartnerAsync(Partner partner)
