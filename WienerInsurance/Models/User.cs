@@ -12,5 +12,6 @@
         public int CreatedByUserId { get; set; }
         public DateTime? ModifiedAtUtc { get; set; }
         public int? ModifiedByUserId { get; set; }
+        public bool IsActive { get; set; } = true;
     }
 }

@@ -24,10 +24,26 @@ public class UserRepository
     public async Task<int> CreateUserAsync(User user)
     {
         using var db = new SqlConnection(_conn);
-        var sql = @"INSERT INTO Users (Email, FirstName, LastName, PasswordHash, RoleId, CreatedAtUtc, CreatedByUserId, ModifiedAtUtc, ModifiedByUserId)
+        var sql = @"INSERT INTO Users (Email, FirstName, LastName, PasswordHash, RoleId, CreatedAtUtc, CreatedByUserId, ModifiedAtUtc, ModifiedByUserId, IsActive)
                     OUTPUT INSERTED.Id
-                    VALUES (@Email, @FirstName, @LastName, @PasswordHash, @RoleId, @CreatedAtUtc, @CreatedByUserId, @ModifiedAtUtc, @ModifiedByUserId)";
+                    VALUES (@Email, @FirstName, @LastName, @PasswordHash, @RoleId, @CreatedAtUtc, @CreatedByUserId, @ModifiedAtUtc, @ModifiedByUserId, @IsActive)";
         return await db.ExecuteScalarAsync<int>(sql, user);
+    }
+
+    public async Task<bool> SoftDeleteUserAsync(int id, DateTime modifiedAtUtc, int? modifiedByUserId)
+    {
+        using var db = new SqlConnection(_conn);
+        var sql = @"UPDATE Users SET IsActive = 0, ModifiedAtUtc = @ModifiedAtUtc, ModifiedByUserId = @ModifiedByUserId WHERE Id = @Id";
+        var rows = await db.ExecuteAsync(sql, new { Id = id, ModifiedAtUtc = modifiedAtUtc, ModifiedByUserId = modifiedByUserId });
+        return rows > 0;
+    }
+
+    public async Task<bool> RestoreUserAsync(int id, DateTime modifiedAtUtc, int? modifiedByUserId)
+    {
+        using var db = new SqlConnection(_conn);
+        var sql = @"UPDATE Users SET IsActive = 1, ModifiedAtUtc = @ModifiedAtUtc, ModifiedByUserId = @ModifiedByUserId WHERE Id = @Id";
+        var rows = await db.ExecuteAsync(sql, new { Id = id, ModifiedAtUtc = modifiedAtUtc, ModifiedByUserId = modifiedByUserId });
+        return rows > 0;
     }
 
 
