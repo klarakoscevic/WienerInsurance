@@ -8,5 +8,9 @@
         public string LastName { get; set; }
         public string PasswordHash { get; set; }
         public int RoleId { get; set; }
+        public DateTime? CreatedAtUtc { get; set; }
+        public int CreatedByUserId { get; set; }
+        public DateTime? ModifiedAtUtc { get; set; }
+        public int? ModifiedByUserId { get; set; }
     }
 }

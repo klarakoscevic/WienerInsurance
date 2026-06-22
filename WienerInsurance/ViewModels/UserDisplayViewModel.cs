@@ -6,5 +6,7 @@
         public string Email { get; set; }
         public string FullName { get; set; }
         public string RoleName { get; set; }
+        public DateTime? CreatedAtUtc { get; set; }
+        public DateTime? ModifiedAtUtc { get; set; }
     }
 }

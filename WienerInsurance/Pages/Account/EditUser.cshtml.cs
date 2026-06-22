@@ -86,6 +86,13 @@ namespace WienerInsurance.Pages.Account
             user.PasswordHash = passwordHash;
             user.RoleId = newRoleId;
 
+            // set modified audit fields
+            user.ModifiedAtUtc = DateTime.UtcNow;
+            if (current != null)
+            {
+                user.ModifiedByUserId = current.Id;
+            }
+
             await _repo.UpdateUserAsync(user);
 
             if (User.IsInRole("Admin"))

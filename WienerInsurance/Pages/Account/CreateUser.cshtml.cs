@@ -48,8 +48,13 @@ namespace WienerInsurance.Pages.Account
                 FirstName = Input.FirstName,
                 LastName = Input.LastName,
                 PasswordHash = hash,
-                RoleId = Input.RoleId
+                RoleId = Input.RoleId,
+                CreatedAtUtc = DateTime.UtcNow
             };
+
+            // set CreatedByUserId from the currently logged in user (fallback to system user id 1)
+            var current = await _repo.GetUserByEmailAsync(User.Identity.Name);
+            user.CreatedByUserId = current?.Id ?? 1;
 
             var id = await _repo.CreateUserAsync(user);
 

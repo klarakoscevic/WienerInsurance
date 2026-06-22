@@ -24,9 +24,9 @@ public class UserRepository
     public async Task<int> CreateUserAsync(User user)
     {
         using var db = new SqlConnection(_conn);
-        var sql = @"INSERT INTO Users (Email, FirstName, LastName, PasswordHash, RoleId)
+        var sql = @"INSERT INTO Users (Email, FirstName, LastName, PasswordHash, RoleId, CreatedAtUtc, CreatedByUserId, ModifiedAtUtc, ModifiedByUserId)
                     OUTPUT INSERTED.Id
-                    VALUES (@Email, @FirstName, @LastName, @PasswordHash, @RoleId)";
+                    VALUES (@Email, @FirstName, @LastName, @PasswordHash, @RoleId, @CreatedAtUtc, @CreatedByUserId, @ModifiedAtUtc, @ModifiedByUserId)";
         return await db.ExecuteScalarAsync<int>(sql, user);
     }
 
@@ -59,7 +59,9 @@ public class UserRepository
     public async Task UpdateUserAsync(User user)
     {
         using var db = new SqlConnection(_conn);
-        var sql = @"UPDATE Users SET Email = @Email, FirstName = @FirstName, LastName = @LastName, PasswordHash = @PasswordHash, RoleId = @RoleId WHERE Id = @Id";
+        var sql = @"UPDATE Users SET Email = @Email, FirstName = @FirstName, LastName = @LastName, PasswordHash = @PasswordHash, RoleId = @RoleId,
+                    ModifiedAtUtc = @ModifiedAtUtc, ModifiedByUserId = @ModifiedByUserId
+                    WHERE Id = @Id";
         await db.ExecuteAsync(sql, user);
     }
 }

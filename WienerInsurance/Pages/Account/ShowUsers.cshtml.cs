@@ -34,7 +34,9 @@ namespace WienerInsurance.Pages.Account
                 Id = u.Id,
                 Email = u.Email,
                 FullName = $"{u.FirstName} {u.LastName}",
-                RoleName = Roles.FirstOrDefault(g => g.Id == u.RoleId)?.Name
+                RoleName = Roles.FirstOrDefault(g => g.Id == u.RoleId)?.Name,
+                CreatedAtUtc = u.CreatedAtUtc,
+                ModifiedAtUtc = u.ModifiedAtUtc
             }).ToList();
         }
     }
