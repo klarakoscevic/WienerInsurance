@@ -14,9 +14,14 @@ namespace WienerInsurance.Models
 
         [Required(ErrorMessage = "Iznos police je obavezan.")]
         [Range(0.01, double.MaxValue, ErrorMessage = "Iznos police mora biti veći od 0.")]
-        public decimal Amount { get; set; }
+        public decimal Amount { get; set; }    
+        public DateTime CreatedAtUtc { get; set; }
+        public int CreatedByUserId { get; set; }
+        public DateTime? ModifiedAtUtc { get; set; }
+        public int? ModifiedByUserId { get; set; }
+        public bool IsActive { get; set; } = true;
 
         [NotMapped]
-        public string PartnerFullName { get; set; }
+        public string? PartnerFullName { get; set; }
     }
 }

@@ -12,11 +12,13 @@ namespace WienerInsurance.Pages
     {
         private readonly PartnerRepository _partnerRepo;
         private readonly PolicyRepository _policyRepo;
+        private readonly UserRepository _userRepo;
 
-        public CreatePolicyModel(PartnerRepository partnerRepo, PolicyRepository policyRepo)
+        public CreatePolicyModel(PartnerRepository partnerRepo, PolicyRepository policyRepo, UserRepository userRepo)
         {
             _partnerRepo = partnerRepo;
             _policyRepo = policyRepo;
+            _userRepo = userRepo;
         }
 
         [BindProperty]
@@ -41,6 +43,11 @@ namespace WienerInsurance.Pages
                 await LoadPartnerInfo(Policy.PartnerId);
                 return Page();
             }
+
+            var email = User?.Identity?.Name;
+            var user = email != null ? await _userRepo.GetUserByEmailAsync(email) : null;
+            Policy.CreatedByUserId = user?.Id ?? 1; // fallback to system user
+            Policy.CreatedAtUtc = DateTime.UtcNow;
 
             var success = await _policyRepo.CreatePolicyAsync(Policy);
             if (success)

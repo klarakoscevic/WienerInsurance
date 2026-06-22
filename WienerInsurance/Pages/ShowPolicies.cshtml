@@ -10,6 +10,15 @@
         <h2 class="text-secondary font-weight-bold">Popis svih polica</h2>
     </div>
 
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success mb-4">@TempData["Success"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger mb-4">@TempData["Error"]</div>
+    }
+
     <!-- Filtri -->
     <div class="card bg-light mb-4 shadow-sm border-0">
         <div class="card-body py-3">
@@ -26,13 +35,25 @@
                     </select>
                 </div>
 
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label for="SearchPolicyNumber" class="form-label text-secondary mb-1">Broj police:</label>
                     <input type="text" asp-for="SearchPolicyNumber" class="form-control form-control-sm" placeholder="Upišite broj police..." />
                 </div>
 
+                <div class="col-md-2">
+                    <label for="StatusFilter" class="form-label text-secondary mb-1">Status:</label>
+                    <select asp-for="StatusFilter" class="form-control form-control-sm">
+                        <option value="active">Aktivne</option>
+                        <option value="all">Sve</option>
+                        <option value="inactive">Neaktivne</option>
+                    </select>
+                </div>
+
                 <div class="col-md-2 d-flex gap-2">
                     <button type="submit" class="btn btn-dark btn-sm flex-fill shadow-sm font-weight-bold">Traži</button>
+                </div>
+
+                <div class="col-md-2 d-flex gap-2">
                     <a asp-page="/ShowPolicies" class="btn btn-outline-danger btn-sm flex-fill shadow-sm font-weight-bold">Očisti</a>
                 </div>
             </form>
@@ -47,13 +68,14 @@
                     <th>Partner</th>
                     <th>Broj police</th>
                     <th>Iznos police (€)</th>
+                    <th>Akcije</th>
                 </tr>
             </thead>
             <tbody>
                 @if (!Model.Policies.Any())
                 {
                     <tr>
-                        <td colspan="3" class="text-center text-muted py-4">Nema pronađenih polica.</td>
+                        <td colspan="4" class="text-center text-muted py-4">Nema pronađenih polica.</td>
                     </tr>
                 }
                 else
@@ -62,8 +84,34 @@
                     {
                         <tr>
                             <td>@p.PartnerFullName</td>
-                            <td>@p.PolicyNumber</td>
+                            <td>
+                                @p.PolicyNumber
+                                @if (!p.IsActive)
+                                {
+                                    <span class="badge bg-danger ms-2">Neaktivna</span>
+                                }
+                            </td>
                             <td>@p.Amount.ToString("N2") €</td>
+                            <td>
+                                @if (p.IsActive)
+                                {
+                                    <form method="post" asp-page-handler="Delete" asp-route-id="@p.Id" onsubmit="return confirm('Jeste li sigurni da želite obrisati policu?');">
+                                        <input type="hidden" asp-for="StatusFilter" />
+                                        <input type="hidden" asp-for="SelectedPartnerId" />
+                                        <input type="hidden" asp-for="SearchPolicyNumber" />
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">Obriši</button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <form method="post" asp-page-handler="Restore" asp-route-id="@p.Id" onsubmit="return confirm('Jeste li sigurni da želite aktivirati policu?');">
+                                        <input type="hidden" asp-for="StatusFilter" />
+                                        <input type="hidden" asp-for="SelectedPartnerId" />
+                                        <input type="hidden" asp-for="SearchPolicyNumber" />
+                                        <button type="submit" class="btn btn-outline-success btn-sm">Aktiviraj</button>
+                                    </form>
+                                }
+                            </td>
                         </tr>
                     }
                 }
