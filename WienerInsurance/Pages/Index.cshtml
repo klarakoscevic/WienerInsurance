@@ -1,4 +1,6 @@
 ﻿@page
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
 @model WienerInsurance.Pages.IndexModel
 @{
     ViewData["Title"] = "Popis Partnera";
@@ -7,7 +9,7 @@
 <div class="container-fluid mt-4 px-md-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Popis partnera</h2>
-        <a asp-page="/CreatePartner" class="btn btn-primary shadow-sm">Unos novog partnera</a>
+        <a asp-page="/CreatePartner" class="btn btn-primary shadow-sm">Dodaj novog partnera</a>
     </div>
 
     @if (TempData["Success"] != null)
