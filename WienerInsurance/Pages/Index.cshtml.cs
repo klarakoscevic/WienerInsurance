@@ -54,7 +54,10 @@ namespace WienerInsurance.Pages
         public IEnumerable<PartnerViewModel> Partners { get; set; }
         public IEnumerable<PartnerType> PartnerTypes { get; set; }
         public IEnumerable<Gender> Genders { get; set; }
+        public PaginationViewModel Pagination { get; set; }
 
+        [BindProperty(SupportsGet = true)] public int PageNumber { get; set; } = 1;
+        [BindProperty(SupportsGet = true)] public int PageSize { get; set; } = 10;
         [BindProperty(SupportsGet = true)] public string SearchName { get; set; }
         [BindProperty(SupportsGet = true)] public string SearchOib { get; set; }
         [BindProperty(SupportsGet = true)] public string SearchPartnerNumber { get; set; }
@@ -85,26 +88,29 @@ namespace WienerInsurance.Pages
                 }
             }
 
-            var allPartners = await _repo.GetAllPartnersAsync();
+            if (PageNumber < 1) PageNumber = 1;
+            if (PageSize < 1) PageSize = 10;
 
-            if (isActiveFilter.HasValue)
+            var (partners, totalCount) = await _repo.GetAllPartnersPaginatedAsync(
+                pageNumber: PageNumber,
+                pageSize: PageSize,
+                isActive: isActiveFilter,
+                partnerTypeId: PartnerType.HasValue && PartnerType.Value != 0 ? PartnerType.Value : null,
+                searchName: SearchName,
+                searchOib: SearchOib,
+                searchPartnerNumber: SearchPartnerNumber
+            );
+
+            var totalPages = (int)Math.Ceiling((double)totalCount / PageSize);
+            Pagination = new PaginationViewModel
             {
-                allPartners = allPartners.Where(p => (p.IsActive) == isActiveFilter.Value);
-            }
+                CurrentPage = PageNumber,
+                PageSize = PageSize,
+                TotalItems = totalCount,
+                TotalPages = totalPages
+            };
 
-            if (!string.IsNullOrEmpty(SearchName))
-                allPartners = allPartners.Where(p => p.FirstName.Contains(SearchName, StringComparison.OrdinalIgnoreCase) || p.LastName.Contains(SearchName, StringComparison.OrdinalIgnoreCase));
-
-            if (!string.IsNullOrEmpty(SearchOib))
-                allPartners = allPartners.Where(p => p.CroatianPIN?.Contains(SearchOib) == true);
-
-            if (!string.IsNullOrEmpty(SearchPartnerNumber))
-                allPartners = allPartners.Where(p => p.PartnerNumber?.Contains(SearchPartnerNumber) == true);
-
-            if (PartnerType.HasValue && PartnerType.Value != 0)
-                allPartners = allPartners.Where(p => p.PartnerTypeId == PartnerType.Value);
-
-            Partners = allPartners.Select(p =>
+            Partners = partners.Select(p =>
             {
                 DateTime utcDate = DateTime.SpecifyKind(p.CreatedAtUtc, DateTimeKind.Utc);
 

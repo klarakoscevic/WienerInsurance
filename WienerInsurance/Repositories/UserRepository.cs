@@ -1,5 +1,6 @@
 ﻿using Dapper;
 using Microsoft.Data.SqlClient;
+using System.Data;
 using WienerInsurance.Models;
 
 public class UserRepository
@@ -15,10 +16,79 @@ public class UserRepository
             new { Email = email });
     }
 
-    public async Task<IEnumerable<User>> GetAllUsersAsync()
+    public async Task<IEnumerable<User>> GetAllUsersAsync(bool? isActive = null, int? roleId = null, string searchName = null)
     {
         using var db = new SqlConnection(_conn);
-        return await db.QueryAsync<User>("SELECT u.* FROM Users u JOIN UserRoles r ON u.RoleId = r.Id");
+        var whereConditions = new List<string>();
+        var param = new DynamicParameters();
+
+        if (isActive.HasValue)
+        {
+            whereConditions.Add("ISNULL(u.IsActive, 1) = @IsActive");
+            param.Add("@IsActive", isActive.Value ? 1 : 0);
+        }
+
+        if (roleId.HasValue)
+        {
+            whereConditions.Add("u.RoleId = @RoleId");
+            param.Add("@RoleId", roleId.Value);
+        }
+
+        if (!string.IsNullOrEmpty(searchName))
+        {
+            whereConditions.Add("(u.FirstName LIKE @SearchName OR u.LastName LIKE @SearchName)");
+            param.Add("@SearchName", $"%{searchName}%");
+        }
+
+        var whereClause = whereConditions.Count > 0 ? "WHERE " + string.Join(" AND ", whereConditions) : "";
+
+        var sql = $"SELECT u.* FROM Users u JOIN UserRoles r ON u.RoleId = r.Id {whereClause}";
+        return await db.QueryAsync<User>(sql, param);
+    }
+
+    public async Task<(IEnumerable<User> items, int totalCount)> GetAllUsersPaginatedAsync(int pageNumber = 1, int pageSize = 10, bool? isActive = true, int? roleId = null, string searchName = null)
+    {
+        using var db = new SqlConnection(_conn);
+        var whereConditions = new List<string>();
+        var param = new DynamicParameters();
+        param.Add("@PageSize", pageSize);
+        param.Add("@PageNumber", pageNumber);
+
+        if (isActive.HasValue)
+        {
+            whereConditions.Add("ISNULL(u.IsActive, 1) = @IsActive");
+            param.Add("@IsActive", isActive.Value ? 1 : 0);
+        }
+
+        if (roleId.HasValue)
+        {
+            whereConditions.Add("u.RoleId = @RoleId");
+            param.Add("@RoleId", roleId.Value);
+        }
+
+        if (!string.IsNullOrEmpty(searchName))
+        {
+            whereConditions.Add("(u.FirstName LIKE @SearchName OR u.LastName LIKE @SearchName)");
+            param.Add("@SearchName", $"%{searchName}%");
+        }
+
+        var whereClause = whereConditions.Count > 0 ? "WHERE " + string.Join(" AND ", whereConditions) : "";
+
+        // Get total count
+        var countQuery = $"SELECT COUNT(*) FROM Users u JOIN UserRoles r ON u.RoleId = r.Id {whereClause}";
+        var totalCount = await db.ExecuteScalarAsync<int>(countQuery, param);
+
+        // Get paginated results
+        var dataQuery = $@"
+            SELECT u.* FROM Users u 
+            JOIN UserRoles r ON u.RoleId = r.Id 
+            {whereClause}
+            ORDER BY u.Id DESC
+            OFFSET (@PageNumber - 1) * @PageSize ROWS
+            FETCH NEXT @PageSize ROWS ONLY";
+
+        var items = await db.QueryAsync<User>(dataQuery, param);
+        return (items, totalCount);
     }
 
     public async Task<int> CreateUserAsync(User user)

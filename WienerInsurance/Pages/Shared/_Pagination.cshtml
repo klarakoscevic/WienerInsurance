@@ -1,0 +1,49 @@
+@model WienerInsurance.ViewModels.PaginationViewModel
+
+@if (Model != null)
+{
+    <nav aria-label="Page navigation" class="mt-4">
+        @if (Model.TotalPages > 1)
+        {
+            <ul class="pagination justify-content-center">
+                <li class="page-item @(Model.HasPreviousPage ? "" : "disabled")">
+                    <a class="page-link" 
+                       href="@GeneratePageUrl(Model.PreviousPage)">
+                        Prethodna
+                    </a>
+                </li>
+
+                @for (int i = 1; i <= Model.TotalPages; i++)
+                {
+                    <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                        <a class="page-link" 
+                           href="@GeneratePageUrl(i)">
+                            @i
+                        </a>
+                    </li>
+                }
+
+                <li class="page-item @(Model.HasNextPage ? "" : "disabled")">
+                    <a class="page-link" 
+                       href="@GeneratePageUrl(Model.NextPage)">
+                        Sljedeća
+                    </a>
+                </li>
+            </ul>
+        }
+        <div class="text-center text-muted small mt-2">
+            Stranica @Model.CurrentPage od @Model.TotalPages (Ukupno: @Model.TotalItems @ViewData["ItemName"])
+        </div>
+    </nav>
+}
+
+@functions {
+    private string GeneratePageUrl(int pageNumber)
+    {
+        var currentQuery = Context.Request.Query.ToDictionary(x => x.Key, x => x.Value.ToString());
+        currentQuery["PageNumber"] = pageNumber.ToString();
+
+        var queryString = string.Join("&", currentQuery.Select(x => $"{x.Key}={Uri.EscapeDataString(x.Value)}"));
+        return $"{Context.Request.Path}?{queryString}";
+    }
+}

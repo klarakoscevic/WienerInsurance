@@ -33,7 +33,7 @@
                             <option value="">-- Svi partneri --</option>
                             @foreach (var p in Model.AllPartners)
                             {
-                                <option value="@p.Id">@p.PartnerNumber - @p.FullName</option>
+                                <option value="@p.Id">@p.PartnerNumber - @p.FullName @(p.IsActive ? "" : " (Neaktivan)")</option>
                             }
                         </select>
                     </div>
@@ -126,6 +126,9 @@
             </tbody>
         </table>
     </div>
+
+    @* Pagination Controls *@
+    <partial name="_Pagination" model="Model.Pagination" view-data='@(new ViewDataDictionary(ViewData) { { "ItemName", "polica" } })' />
 </div>
 
 @section Scripts {

@@ -23,6 +23,13 @@ namespace WienerInsurance.Pages
 
         public IEnumerable<PolicyDisplayViewModel> Policies { get; set; }
         public IEnumerable<Partner> AllPartners { get; set; }
+        public PaginationViewModel Pagination { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public int PageNumber { get; set; } = 1;
+
+        [BindProperty(SupportsGet = true)]
+        public int PageSize { get; set; } = 10;
 
         [BindProperty(SupportsGet = true)]
         public int? SelectedPartnerId { get; set; }
@@ -33,7 +40,7 @@ namespace WienerInsurance.Pages
 
         public async Task OnGetAsync()
         {
-            AllPartners = await _partRepo.GetAllPartnersAsync();
+            AllPartners = await _partRepo.GetAllPartnersAsync(isActive: null);
             bool? isActiveFilter = true;
             if (!string.IsNullOrEmpty(StatusFilter))
             {
@@ -51,13 +58,31 @@ namespace WienerInsurance.Pages
                 }
             }
 
-            var allPolicies = await _pRepo.GetAllPoliciesAsync(isActiveFilter);
+            if (PageNumber < 1) PageNumber = 1;
+            if (PageSize < 1) PageSize = 10;
+
+            var (policies, totalCount) = await _pRepo.GetAllPoliciesPaginatedAsync(
+                isActive: isActiveFilter,
+                pageNumber: PageNumber,
+                pageSize: PageSize
+            );
+
+            var totalPages = (int)Math.Ceiling((double)totalCount / PageSize);
+            Pagination = new PaginationViewModel
+            {
+                CurrentPage = PageNumber,
+                PageSize = PageSize,
+                TotalItems = totalCount,
+                TotalPages = totalPages
+            };
+
+            var allPolicies = policies.ToList();
 
             if (SelectedPartnerId.HasValue)
-                allPolicies = allPolicies.Where(p => p.PartnerId == SelectedPartnerId);
+                allPolicies = allPolicies.Where(p => p.PartnerId == SelectedPartnerId).ToList();
 
             if (!string.IsNullOrEmpty(SearchPolicyNumber))
-                allPolicies = allPolicies.Where(p => p.PolicyNumber.Contains(SearchPolicyNumber));
+                allPolicies = allPolicies.Where(p => p.PolicyNumber.Contains(SearchPolicyNumber)).ToList();
 
             Policies = allPolicies.Select(p => new PolicyDisplayViewModel
             {
@@ -81,7 +106,7 @@ namespace WienerInsurance.Pages
             {
                 TempData["Error"] = "Greška pri brisanju police.";
             }
-            return RedirectToPage(new { StatusFilter = StatusFilter, SelectedPartnerId = SelectedPartnerId, SearchPolicyNumber = SearchPolicyNumber });
+            return RedirectToPage(new { StatusFilter = StatusFilter, SelectedPartnerId = SelectedPartnerId, SearchPolicyNumber = SearchPolicyNumber, PageNumber = PageNumber, PageSize = PageSize });
         }
 
         public async Task<IActionResult> OnPostRestoreAsync(int id)
@@ -97,7 +122,7 @@ namespace WienerInsurance.Pages
             {
                 TempData["Error"] = "Greška pri aktiviranju police.";
             }
-            return RedirectToPage(new { StatusFilter = StatusFilter, SelectedPartnerId = SelectedPartnerId, SearchPolicyNumber = SearchPolicyNumber });
+            return RedirectToPage(new { StatusFilter = StatusFilter, SelectedPartnerId = SelectedPartnerId, SearchPolicyNumber = SearchPolicyNumber, PageNumber = PageNumber, PageSize = PageSize });
         }
     }
 }

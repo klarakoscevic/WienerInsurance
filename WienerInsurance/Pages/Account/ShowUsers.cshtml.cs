@@ -14,6 +14,13 @@ namespace WienerInsurance.Pages.Account
 
         public IEnumerable<UserDisplayViewModel> Users { get; set; }
         public IEnumerable<UserRole> Roles { get; set; }
+        public PaginationViewModel Pagination { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public int PageNumber { get; set; } = 1;
+
+        [BindProperty(SupportsGet = true)]
+        public int PageSize { get; set; } = 10;
 
         [BindProperty(SupportsGet = true)]
         public int? RoleId { get; set; }
@@ -25,8 +32,6 @@ namespace WienerInsurance.Pages.Account
         public async Task OnGetAsync()
         {
             Roles = await _repo.GetAllRolesAsync();
-
-            var allUsers = await _repo.GetAllUsersAsync();
 
             bool? isActiveFilter = true;
             if (!string.IsNullOrEmpty(StatusFilter))
@@ -45,22 +50,27 @@ namespace WienerInsurance.Pages.Account
                 }
             }
 
-            if (isActiveFilter.HasValue)
-            {
-                allUsers = allUsers.Where(u => u.IsActive == isActiveFilter.Value);
-            }
+            if (PageNumber < 1) PageNumber = 1;
+            if (PageSize < 1) PageSize = 10;
 
-            if (RoleId.HasValue && RoleId.Value != 0)
-            {
-                allUsers = allUsers.Where(u => u.RoleId == RoleId.Value);
-            }
+            var (users, totalCount) = await _repo.GetAllUsersPaginatedAsync(
+                pageNumber: PageNumber,
+                pageSize: PageSize,
+                isActive: isActiveFilter,
+                roleId: RoleId.HasValue && RoleId.Value != 0 ? RoleId.Value : null,
+                searchName: SearchName
+            );
 
-            if (!string.IsNullOrEmpty(SearchName))
+            var totalPages = (int)Math.Ceiling((double)totalCount / PageSize);
+            Pagination = new PaginationViewModel
             {
-                allUsers = allUsers.Where(p => p.FirstName.Contains(SearchName, StringComparison.OrdinalIgnoreCase) || p.LastName.Contains(SearchName, StringComparison.OrdinalIgnoreCase));
-            }
+                CurrentPage = PageNumber,
+                PageSize = PageSize,
+                TotalItems = totalCount,
+                TotalPages = totalPages
+            };
 
-            Users = allUsers.Select(u => new UserDisplayViewModel
+            Users = users.Select(u => new UserDisplayViewModel
             {
                 Id = u.Id,
                 Email = u.Email,
@@ -85,7 +95,7 @@ namespace WienerInsurance.Pages.Account
             {
                 TempData["Error"] = "Greška pri brisanju korisnika.";
             }
-            return RedirectToPage(new { RoleId = RoleId, StatusFilter = StatusFilter, SearchName = SearchName });
+            return RedirectToPage(new { RoleId = RoleId, StatusFilter = StatusFilter, SearchName = SearchName, PageNumber = PageNumber, PageSize = PageSize });
         }
 
         public async Task<IActionResult> OnPostRestoreAsync(int id)
@@ -101,7 +111,7 @@ namespace WienerInsurance.Pages.Account
             {
                 TempData["Error"] = "Greška pri aktiviranju korisnika.";
             }
-            return RedirectToPage(new { RoleId = RoleId, StatusFilter = StatusFilter, SearchName = SearchName });
+            return RedirectToPage(new { RoleId = RoleId, StatusFilter = StatusFilter, SearchName = SearchName, PageNumber = PageNumber, PageSize = PageSize });
         }
     }
 }

@@ -120,6 +120,9 @@
             </tbody>
         </table>
     </div>
+
+    @* Pagination Controls *@
+    <partial name="_Pagination" model="Model.Pagination" view-data='@(new ViewDataDictionary(ViewData) { { "ItemName", "korisnika" } })' />
 </div>
 
 @section Scripts {

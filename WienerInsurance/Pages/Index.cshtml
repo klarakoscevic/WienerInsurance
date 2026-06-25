@@ -137,6 +137,9 @@
             </tbody>
         </table>
     </div>
+
+    @* Pagination Controls *@
+    <partial name="_Pagination" model="Model.Pagination" view-data='@(new ViewDataDictionary(ViewData) { { "ItemName", "partnera" } })' />
 </div>
 
 <div class="modal fade" id="detailsModal" tabindex="-1" role="dialog" aria-hidden="true">

@@ -28,25 +28,74 @@ namespace WienerInsurance.Repositories
         }
 
         // isActive: true = only active, false = only inactive, null = all
-        public async Task<IEnumerable<Policy>> GetAllPoliciesAsync(bool? isActive = true)
+        public async Task<IEnumerable<Policy>> GetAllPoliciesAsync(bool? isActive = true, int? partnerId = null, string searchPolicyNumber = null)
         {
-            var query = @"
-                    SELECT p.*, CONCAT(part.FirstName, ' ', part.LastName) AS PartnerFullName 
-                    FROM Policies p 
-                    LEFT JOIN Partners part ON p.PartnerId = part.Id";
+            var whereConditions = new List<string>();
+            var param = new DynamicParameters();
 
-            object param = null;
             if (isActive.HasValue)
             {
-                query += " WHERE ISNULL(p.IsActive, 1) = @IsActive";
-                param = new { IsActive = isActive.Value ? 1 : 0 };
+                whereConditions.Add("ISNULL(p.IsActive, 1) = @IsActive");
+                param.Add("@IsActive", isActive.Value ? 1 : 0);
             }
 
-            query += " ORDER BY p.CreatedAtUtc DESC";
+            if (partnerId.HasValue)
+            {
+                whereConditions.Add("p.PartnerId = @PartnerId");
+                param.Add("@PartnerId", partnerId.Value);
+            }
+
+            if (!string.IsNullOrEmpty(searchPolicyNumber))
+            {
+                whereConditions.Add("p.PolicyNumber LIKE @SearchPolicyNumber");
+                param.Add("@SearchPolicyNumber", $"%{searchPolicyNumber}%");
+            }
+
+            var whereClause = whereConditions.Count > 0 ? "WHERE " + string.Join(" AND ", whereConditions) : "";
+
+            var query = $@"
+                    SELECT p.*, CONCAT(part.FirstName, ' ', part.LastName) AS PartnerFullName 
+                    FROM Policies p 
+                    LEFT JOIN Partners part ON p.PartnerId = part.Id
+                    {whereClause}
+                    ORDER BY p.CreatedAtUtc DESC";
 
             using var conn = Connection;
             return await conn.QueryAsync<Policy>(query, param);
-        }      
+        }
+
+        // isActive: true = only active, false = only inactive, null = all
+        public async Task<(IEnumerable<Policy> items, int totalCount)> GetAllPoliciesPaginatedAsync(bool? isActive = true, int pageNumber = 1, int pageSize = 10)
+        {
+            var whereClause = "";
+            var param = new DynamicParameters();
+            param.Add("@PageSize", pageSize);
+            param.Add("@PageNumber", pageNumber);
+
+            if (isActive.HasValue)
+            {
+                whereClause = " WHERE ISNULL(p.IsActive, 1) = @IsActive";
+                param.Add("@IsActive", isActive.Value ? 1 : 0);
+            }
+
+            // Get total count
+            var countQuery = $"SELECT COUNT(*) FROM Policies p {whereClause}";
+            using var conn = Connection;
+            var totalCount = await conn.ExecuteScalarAsync<int>(countQuery, param);
+
+            // Get paginated results
+            var dataQuery = $@"
+                    SELECT p.*, CONCAT(part.FirstName, ' ', part.LastName) AS PartnerFullName 
+                    FROM Policies p 
+                    LEFT JOIN Partners part ON p.PartnerId = part.Id
+                    {whereClause}
+                    ORDER BY p.CreatedAtUtc DESC
+                    OFFSET (@PageNumber - 1) * @PageSize ROWS
+                    FETCH NEXT @PageSize ROWS ONLY";
+
+            var items = await conn.QueryAsync<Policy>(dataQuery, param);
+            return (items, totalCount);
+        }
 
         public async Task<bool> SoftDeletePolicyAsync(int id, DateTime modifiedAtUtc, int? modifiedByUserId)
         {
