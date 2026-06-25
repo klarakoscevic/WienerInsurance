@@ -108,10 +108,16 @@ namespace WienerInsurance.Pages
             {
                 DateTime utcDate = DateTime.SpecifyKind(p.CreatedAtUtc, DateTimeKind.Utc);
 
+                var displayName = $"{p.FirstName} {p.LastName}";
+                if (p.PolicyCount > 5 || p.TotalPolicyAmount > 5000m)
+                {
+                    displayName = "* " + displayName;
+                }
+
                 return new PartnerViewModel
                 {
                     Id = p.Id,
-                    FullName = $"{p.FirstName} {p.LastName}",
+                    FullName = displayName,
                     Address = p.Address ?? "-",
                     PartnerNumber = p.PartnerNumber,
                     CroatianPIN = p.CroatianPIN ?? "-",
@@ -121,7 +127,9 @@ namespace WienerInsurance.Pages
                     IsForeign = p.IsForeign,
                     ExternalCode = p.ExternalCode,
                     GenderName = genders.FirstOrDefault(g => g.Id == p.GenderId)?.Name,
-                    IsActive = p.IsActive
+                    IsActive = p.IsActive,
+                    PolicyCount = p.PolicyCount,
+                    TotalPolicyAmount = p.TotalPolicyAmount
                 };
             }).ToList();
         }
@@ -150,7 +158,9 @@ namespace WienerInsurance.Pages
                 IsForeign = partner.IsForeign,
                 ExternalCode = partner.ExternalCode,
                 GenderName = genders.FirstOrDefault(g => g.Id == partner.GenderId)?.Name,
-                IsActive = partner.IsActive
+                IsActive = partner.IsActive,
+                PolicyCount = partner.PolicyCount,
+                TotalPolicyAmount = partner.TotalPolicyAmount
             });
         }
     }

@@ -23,6 +23,12 @@ namespace WienerInsurance.Models
         public int GenderId { get; set; }
 
         [NotMapped]
+        public int PolicyCount { get; set; }
+
+        [NotMapped]
+        public decimal TotalPolicyAmount { get; set; }
+
+        [NotMapped]
         public string FullName => $"{FirstName} {LastName}";
         [NotMapped]
         public string CreatedByUserEmail { get; set; }

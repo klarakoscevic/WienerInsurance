@@ -14,5 +14,8 @@
         public string ExternalCode { get; set; }
         public string GenderName { get; set; }
         public bool IsActive { get; set; }
+
+        public int PolicyCount { get; set; }
+        public decimal TotalPolicyAmount { get; set; }
     }
 }
