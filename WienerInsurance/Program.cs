@@ -8,9 +8,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddSingleton(new PartnerRepository(connectionString));
-builder.Services.AddSingleton(new PolicyRepository(connectionString));
-builder.Services.AddSingleton(new UserRepository(connectionString));
+builder.Services.AddScoped(_ => new PartnerRepository(connectionString));
+builder.Services.AddScoped(_ => new PolicyRepository(connectionString));
+builder.Services.AddScoped(_ => new UserRepository(connectionString));
 
 builder.Services.AddAuthentication("MyCookieAuth")
     .AddCookie("MyCookieAuth", options =>
@@ -40,21 +40,30 @@ Task SeedAsync()
             if (!existingRoles.Contains("User"))
                 await conn.ExecuteAsync("INSERT INTO UserRoles (Name) VALUES (@Name)", new { Name = "User" });
 
-            var adminEmail = "kkoscevic@gmail.com";
-            var admin = await conn.QueryFirstOrDefaultAsync<int?>("SELECT Id FROM Users WHERE Email = @Email", new { Email = adminEmail });
+            // Get admin email from configuration
+            var configAdminEmail = config["DefaultAdminEmail"] ?? "kkoscevic@gmail.com";
+            var admin = await conn.QueryFirstOrDefaultAsync<int?>("SELECT Id FROM Users WHERE Email = @Email", new { Email = configAdminEmail });
             if (admin == null)
             {
                 var adminRoleId = await conn.QueryFirstOrDefaultAsync<int>("SELECT Id FROM UserRoles WHERE Name = @Name", new { Name = "Admin" });
-                var hasher = new PasswordHasher<string>();
-                var hash = hasher.HashPassword(null, "Admin123!");
-                await conn.ExecuteAsync(@"INSERT INTO Users (Email, FirstName, LastName, PasswordHash, RoleId)
-                                         VALUES (@Email, @FirstName, @LastName, @PasswordHash, @RoleId)",
-                    new { Email = adminEmail, FirstName = "Klara", LastName = "Koscevic", PasswordHash = hash, RoleId = adminRoleId });
+                    var hasher = new PasswordHasher<string>();
+
+                    // Get password from configuration
+                    var adminPassword = config["DefaultAdminPassword"] ?? "Admin123!";
+                    var hash = hasher.HashPassword(null, adminPassword);
+
+                    // Get admin email from configuration
+                    var adminEmail = config["DefaultAdminEmail"] ?? "kkoscevic@gmail.com";
+
+                    await conn.ExecuteAsync(@"INSERT INTO Users (Email, FirstName, LastName, PasswordHash, RoleId)
+                                             VALUES (@Email, @FirstName, @LastName, @PasswordHash, @RoleId)",
+                        new { Email = adminEmail, FirstName = "System", LastName = "Administrator", PasswordHash = hash, RoleId = adminRoleId });
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // ignore seeding errors to avoid startup crash; log if you add logging
+            // Log seeding errors but don't crash the application
+            Console.WriteLine($"Error during database seeding: {ex.Message}");
         }
     });
 }
@@ -65,6 +74,10 @@ if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
     app.UseHsts();
+}
+else
+{
+    app.UseDeveloperExceptionPage();
 }
 
 app.UseHttpsRedirection();

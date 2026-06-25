@@ -15,6 +15,9 @@ namespace WienerInsurance.ViewModels
         public string Email { get; set; }
 
         [Required(ErrorMessage = "Lozinka je obavezna.")]
+        [StringLength(100, MinimumLength = 8, ErrorMessage = "Lozinka mora imati najmanje 8 znakova.")]
+        [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$", 
+            ErrorMessage = "Lozinka mora sadržavati veliko slovo, malo slovo, broj ispecijalni znak.")]
         [DataType(DataType.Password)]
         public string Password { get; set; }
 

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using WienerInsurance.Models;
@@ -6,6 +7,7 @@ using WienerInsurance.ViewModels;
 
 namespace WienerInsurance.Pages
 {
+    [Authorize]
     public class IndexModel : PageModel
     {
         private readonly PartnerRepository _repo;
