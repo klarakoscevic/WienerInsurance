@@ -1,19 +1,15 @@
 ﻿@page
 @model WienerInsurance.Pages.CreatePolicyModel
 @{
-    ViewData["Title"] = "Nova Polica";
+    Layout = null;
 }
 
-<div class="container-fluid mt-4 px-md-5">
-
-    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
-        <div>
-            <h2 class="text-secondary font-weight-bold">Unos nove police</h2>
-            <div class="text-muted small mt-1">
-                Kreirate policu za partnera: <strong class="text-dark">@Model.PartnerFullName</strong> (@Model.PartnerNumber)
-            </div>
+<div class="container-fluid">
+    <div class="mb-4 border-bottom pb-3">
+        <h5 class="text-secondary font-weight-bold">Unos nove police</h5>
+        <div class="text-muted small mt-1">
+            Kreirate policu za partnera: <strong class="text-dark">@Model.PartnerFullName</strong> (@Model.PartnerNumber)
         </div>
-        <span class="text-danger small font-weight-bold">* Polja su obavezna</span>
     </div>
 
     @if (!string.IsNullOrEmpty(Model.ErrorMessage))
@@ -21,9 +17,8 @@
         <div class="alert alert-danger mb-4">@Model.ErrorMessage</div>
     }
 
-    <form method="post" class="needs-validation" novalidate style="max-width: 800px;">
+    <form method="post" asp-page="/CreatePolicy" class="needs-validation" novalidate>
         <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
-
         <input type="hidden" asp-for="Policy.PartnerId" />
 
         <div class="row">
@@ -40,29 +35,24 @@
             </div>
         </div>
 
-        <div class="d-flex justify-content-between border-top pt-3 mt-4">
-            <a asp-page="/Index" class="btn btn-outline-secondary px-4">Odustani</a>
-            <button type="submit" class="btn btn-primary px-5 font-weight-bold">Spremi policu</button>
+        <div class="d-flex justify-content-end border-top pt-3 mt-4">
+            <button type="button" class="btn btn-outline-secondary px-4 mr-2" data-dismiss="modal">Odustani</button>
+            <button type="submit" class="btn btn-primary px-4 font-weight-bold">Spremi policu</button>
         </div>
     </form>
 </div>
 
-@section Scripts {
-    <script>
-        (function() {
-            'use strict';
-            window.addEventListener('load', function() {
-                var forms = document.getElementsByClassName('needs-validation');
-                Array.prototype.filter.call(forms, function(form) {
-                    form.addEventListener('submit', function(event) {
-                        if (form.checkValidity() === false) {
-                            event.preventDefault();
-                            event.stopPropagation();
-                        }
-                        form.classList.add('was-validated');
-                    }, false);
-                });
+<script>
+    (function() {
+        var forms = document.getElementsByClassName('needs-validation');
+        Array.prototype.filter.call(forms, function(form) {
+            form.addEventListener('submit', function(event) {
+                if (form.checkValidity() === false) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
             }, false);
-        })();
-    </script>
-}
+        });
+    })();
+</script>

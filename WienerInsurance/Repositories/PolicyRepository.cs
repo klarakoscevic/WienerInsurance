@@ -31,7 +31,7 @@ namespace WienerInsurance.Repositories
         public async Task<IEnumerable<Policy>> GetAllPoliciesAsync(bool? isActive = true)
         {
             var query = @"
-                    SELECT p.*, (part.FirstName + ' ' + part.LastName) AS PartnerFullName 
+                    SELECT p.*, CONCAT(part.FirstName, ' ', part.LastName) AS PartnerFullName 
                     FROM Policies p 
                     LEFT JOIN Partners part ON p.PartnerId = part.Id";
 
@@ -41,6 +41,8 @@ namespace WienerInsurance.Repositories
                 query += " WHERE ISNULL(p.IsActive, 1) = @IsActive";
                 param = new { IsActive = isActive.Value ? 1 : 0 };
             }
+
+            query += " ORDER BY p.CreatedAtUtc DESC";
 
             using var conn = Connection;
             return await conn.QueryAsync<Policy>(query, param);

@@ -50,14 +50,15 @@ namespace WienerInsurance.Pages
             Policy.CreatedAtUtc = DateTime.UtcNow;
 
             var success = await _policyRepo.CreatePolicyAsync(Policy);
+
             if (success)
             {
-                return RedirectToPage("/Index", new { updatedPartnerId = Policy.PartnerId });
+                TempData["Success"] = $"Polica ({Policy.PolicyNumber}) je unešena";
+                return new JsonResult(new { success = true, redirectUrl = "/Index" });
             }
 
             await LoadPartnerInfo(Policy.PartnerId);
-            ErrorMessage = "Greška prilikom unosa police.";
-            return Page();
+            return new JsonResult(new { success = false, message = "Greška prilikom unosa police." });
         }
 
         private async Task LoadPartnerInfo(int partnerId)
