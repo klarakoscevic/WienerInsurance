@@ -39,7 +39,7 @@ namespace WienerInsurance.Pages.Account
         {
             try
             {
-                Roles = await _repo.GetAllRolesAsync();
+                Roles = await _repo.GetAllRolesAsync() ?? Enumerable.Empty<UserRole>();
 
                 bool? isActiveFilter = true;
                 if (!string.IsNullOrEmpty(StatusFilter))
@@ -83,7 +83,7 @@ namespace WienerInsurance.Pages.Account
                     Id = u.Id,
                     Email = u.Email,
                     FullName = $"{u.FirstName} {u.LastName}",
-                    RoleName = Roles.FirstOrDefault(g => g.Id == u.RoleId)?.Name,
+                    RoleName = Roles?.FirstOrDefault(g => g.Id == u.RoleId)?.Name,
                     IsActive = u.IsActive,
                     CreatedAtUtc = u.CreatedAtUtc,
                     ModifiedAtUtc = u.ModifiedAtUtc

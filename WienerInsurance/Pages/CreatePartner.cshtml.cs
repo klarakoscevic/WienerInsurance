@@ -27,8 +27,8 @@ namespace WienerInsurance.Pages
         {
             try
             {
-                ViewData["PartnerTypes"] = await _repo.GetPartnerTypesAsync();
-                ViewData["Genders"] = await _repo.GetGendersAsync();
+                ViewData["PartnerTypes"] = await _repo.GetPartnerTypesAsync() ?? Enumerable.Empty<PartnerType>();
+                ViewData["Genders"] = await _repo.GetGendersAsync() ?? Enumerable.Empty<Gender>();
             }
             catch (Exception ex)
             {
@@ -46,15 +46,15 @@ namespace WienerInsurance.Pages
                 if (!await _repo.IsExternalCodeUniqueAsync(Input.ExternalCode))
                 {
                     ModelState.AddModelError("Input.ExternalCode", "Navedena Vanjska šifra već postoji.");
-                    ViewData["PartnerTypes"] = await _repo.GetPartnerTypesAsync();
-                    ViewData["Genders"] = await _repo.GetGendersAsync();
+                    ViewData["PartnerTypes"] = await _repo.GetPartnerTypesAsync() ?? Enumerable.Empty<PartnerType>();
+                    ViewData["Genders"] = await _repo.GetGendersAsync() ?? Enumerable.Empty<Gender>();
                     return Page();
                 }
 
                 if (!ModelState.IsValid)
                 {
-                    ViewData["PartnerTypes"] = await _repo.GetPartnerTypesAsync();
-                    ViewData["Genders"] = await _repo.GetGendersAsync();
+                    ViewData["PartnerTypes"] = await _repo.GetPartnerTypesAsync() ?? Enumerable.Empty<PartnerType>();
+                    ViewData["Genders"] = await _repo.GetGendersAsync() ?? Enumerable.Empty<Gender>();
                     // var errors = ModelState.Values.SelectMany(v => v.Errors);
                     return Page();
                 }
@@ -93,8 +93,8 @@ namespace WienerInsurance.Pages
             {
                 _logger.LogError(ex, "Error creating partner. User: {User}", User?.Identity?.Name);
                 ModelState.AddModelError("", "Došlo je do greške prilikom spremanja. Molimo pokušajte ponovo.");
-                ViewData["PartnerTypes"] = await _repo.GetPartnerTypesAsync();
-                ViewData["Genders"] = await _repo.GetGendersAsync();
+                ViewData["PartnerTypes"] = await _repo.GetPartnerTypesAsync() ?? Enumerable.Empty<PartnerType>();
+                ViewData["Genders"] = await _repo.GetGendersAsync() ?? Enumerable.Empty<Gender>();
                 return Page();
             }
         }

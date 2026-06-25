@@ -25,7 +25,7 @@ namespace WienerInsurance.Pages.Account
         {
             try
             {
-                var user = id.HasValue ? await _repo.GetUserByIdAsync(id.Value) : await _repo.GetUserByEmailAsync(User.Identity.Name);
+                var user = id.HasValue ? await _repo.GetUserByIdAsync(id.Value) : await _repo.GetUserByEmailAsync(User?.Identity?.Name);
 
                 if (user == null)
                 {
@@ -42,7 +42,7 @@ namespace WienerInsurance.Pages.Account
                     RoleId = user.RoleId
                 };
 
-                Roles = await _repo.GetAllRolesAsync();
+                Roles = await _repo.GetAllRolesAsync() ?? Enumerable.Empty<UserRole>();
 
                 return Page();
             }
@@ -59,7 +59,7 @@ namespace WienerInsurance.Pages.Account
         {
             try
             {
-                Roles = await _repo.GetAllRolesAsync();
+                Roles = await _repo.GetAllRolesAsync() ?? Enumerable.Empty<UserRole>();
 
                 if (!string.Equals(Input.Email, Input.OriginalEmail, StringComparison.OrdinalIgnoreCase))
                 {
@@ -73,7 +73,7 @@ namespace WienerInsurance.Pages.Account
 
                 if (!ModelState.IsValid)
                 {
-                    Roles = await _repo.GetAllRolesAsync();
+                    Roles = await _repo.GetAllRolesAsync() ?? Enumerable.Empty<UserRole>();
                     var errors = ModelState.Values.SelectMany(v => v.Errors);
 
                     return Page();
@@ -83,7 +83,7 @@ namespace WienerInsurance.Pages.Account
 
                 if (user == null) return NotFound();
 
-                var current = await _repo.GetUserByEmailAsync(User.Identity.Name);
+                var current = await _repo.GetUserByEmailAsync(User?.Identity?.Name);
                 if (current == null) return Forbid();
                 if (user.Id != current.Id && !User.IsInRole("Admin")) return Forbid();
 

@@ -92,8 +92,8 @@ namespace WienerInsurance.Pages
         {
             try
             {
-                PartnerTypes = await _repo.GetPartnerTypesAsync();
-                var genders = await _repo.GetGendersAsync();
+                PartnerTypes = await _repo.GetPartnerTypesAsync() ?? Enumerable.Empty<PartnerType>();
+                var genders = await _repo.GetGendersAsync() ?? Enumerable.Empty<Gender>();
                 bool? isActiveFilter = true;
                 if (!string.IsNullOrEmpty(StatusFilter))
                 {
@@ -150,12 +150,12 @@ namespace WienerInsurance.Pages
                         Address = p.Address ?? "-",
                         PartnerNumber = p.PartnerNumber,
                         CroatianPIN = p.CroatianPIN ?? "-",
-                        PartnerTypeName = PartnerTypes.FirstOrDefault(t => t.Id == p.PartnerTypeId)?.Name,
+                        PartnerTypeName = PartnerTypes?.FirstOrDefault(t => t.Id == p.PartnerTypeId)?.Name,
                         CreatedAtFormatted = TimeZoneInfo.ConvertTimeFromUtc(utcDate, TimeZoneInfo.Local).ToString("dd.MM.yyyy HH:mm"),
                         CreatedByUserEmail = p.CreatedByUserEmail,
                         IsForeign = p.IsForeign,
                         ExternalCode = p.ExternalCode,
-                        GenderName = genders.FirstOrDefault(g => g.Id == p.GenderId)?.Name,
+                        GenderName = genders?.FirstOrDefault(g => g.Id == p.GenderId)?.Name,
                         IsActive = p.IsActive,
                         PolicyCount = p.PolicyCount,
                         TotalPolicyAmount = p.TotalPolicyAmount
@@ -181,8 +181,8 @@ namespace WienerInsurance.Pages
                 var partner = await _repo.GetPartnerByIdAsync(id);
                 if (partner == null) return NotFound();
 
-                var types = await _repo.GetPartnerTypesAsync();
-                var genders = await _repo.GetGendersAsync();
+                var types = await _repo.GetPartnerTypesAsync() ?? Enumerable.Empty<PartnerType>();
+                var genders = await _repo.GetGendersAsync() ?? Enumerable.Empty<Gender>();
 
                 DateTime utcDate = DateTime.SpecifyKind(partner.CreatedAtUtc, DateTimeKind.Utc);
                 string formattedDate = TimeZoneInfo.ConvertTimeFromUtc(utcDate, TimeZoneInfo.Local).ToString("dd.MM.yyyy HH:mm");
@@ -194,12 +194,12 @@ namespace WienerInsurance.Pages
                     Address = partner.Address ?? "-",
                     PartnerNumber = partner.PartnerNumber,
                     CroatianPIN = partner.CroatianPIN ?? "-",
-                    PartnerTypeName = types.FirstOrDefault(t => t.Id == partner.PartnerTypeId)?.Name,
+                    PartnerTypeName = types?.FirstOrDefault(t => t.Id == partner.PartnerTypeId)?.Name,
                     CreatedAtFormatted = TimeZoneInfo.ConvertTimeFromUtc(partner.CreatedAtUtc, TimeZoneInfo.Local).ToString("dd.MM.yyyy HH:mm"),
                     CreatedByUserEmail = partner.CreatedByUserEmail ?? "-",
                     IsForeign = partner.IsForeign,
                     ExternalCode = partner.ExternalCode,
-                    GenderName = genders.FirstOrDefault(g => g.Id == partner.GenderId)?.Name,
+                    GenderName = genders?.FirstOrDefault(g => g.Id == partner.GenderId)?.Name,
                     IsActive = partner.IsActive,
                     PolicyCount = partner.PolicyCount,
                     TotalPolicyAmount = partner.TotalPolicyAmount

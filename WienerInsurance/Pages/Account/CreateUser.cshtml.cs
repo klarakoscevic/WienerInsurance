@@ -28,7 +28,7 @@ namespace WienerInsurance.Pages.Account
         {
             try
             {
-                Roles = await _repo.GetAllRolesAsync();
+                Roles = await _repo.GetAllRolesAsync() ?? Enumerable.Empty<UserRole>();
             }
             catch (Exception ex)
             {
@@ -46,13 +46,13 @@ namespace WienerInsurance.Pages.Account
                 if (existing != null)
                 {
                     ModelState.AddModelError("Input.Email", "Postoji korisnik s ovom email adresom");
-                    Roles = await _repo.GetAllRolesAsync();
+                    Roles = await _repo.GetAllRolesAsync() ?? Enumerable.Empty<UserRole>();
                     return Page();
                 }
 
                 if (!ModelState.IsValid)
                 {
-                    Roles = await _repo.GetAllRolesAsync();
+                    Roles = await _repo.GetAllRolesAsync() ?? Enumerable.Empty<UserRole>();
                     return Page();
                 }
 
@@ -70,7 +70,7 @@ namespace WienerInsurance.Pages.Account
                 };
 
                 // set CreatedByUserId from the currently logged in user (fallback to system user id 1)
-                var current = await _repo.GetUserByEmailAsync(User.Identity.Name);
+                var current = await _repo.GetUserByEmailAsync(User?.Identity?.Name);
                 user.CreatedByUserId = current?.Id ?? 1;
 
                 var id = await _repo.CreateUserAsync(user);
@@ -84,7 +84,7 @@ namespace WienerInsurance.Pages.Account
                 _logger.LogError(ex, "Error creating user. Email: {Email}, CreatedBy: {CreatedBy}", 
                     Input?.Email, User?.Identity?.Name);
                 ModelState.AddModelError("", "Došlo je do greške prilikom spremanja. Molimo pokušajte ponovo.");
-                Roles = await _repo.GetAllRolesAsync();
+                Roles = await _repo.GetAllRolesAsync() ?? Enumerable.Empty<UserRole>();
                 return Page();
             }
         }

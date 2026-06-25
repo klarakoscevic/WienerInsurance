@@ -43,8 +43,8 @@ namespace WienerInsurance.Pages
                     ExternalCode = p.ExternalCode
                 };
 
-                ViewData["PartnerTypes"] = await _repo.GetPartnerTypesAsync();
-                ViewData["Genders"] = await _repo.GetGendersAsync();
+                ViewData["PartnerTypes"] = await _repo.GetPartnerTypesAsync() ?? Enumerable.Empty<PartnerType>();
+                ViewData["Genders"] = await _repo.GetGendersAsync() ?? Enumerable.Empty<Gender>();
                 return Page();
             }
             catch (Exception ex)
@@ -60,6 +60,7 @@ namespace WienerInsurance.Pages
             try
             {
                 var partner = await _repo.GetPartnerByIdAsync(id);
+                if (partner == null) return NotFound();
 
                 if (partner.ExternalCode != Input.ExternalCode && !await _repo.IsExternalCodeUniqueAsync(Input.ExternalCode))
                 {
@@ -68,8 +69,8 @@ namespace WienerInsurance.Pages
 
                 if (!ModelState.IsValid)
                 {
-                    ViewData["PartnerTypes"] = await _repo.GetPartnerTypesAsync();
-                    ViewData["Genders"] = await _repo.GetGendersAsync();
+                    ViewData["PartnerTypes"] = await _repo.GetPartnerTypesAsync() ?? Enumerable.Empty<PartnerType>();
+                    ViewData["Genders"] = await _repo.GetGendersAsync() ?? Enumerable.Empty<Gender>();
                     var errors = ModelState.Values.SelectMany(v => v.Errors);
 
                     return Page();

@@ -68,7 +68,8 @@ namespace WienerInsurance.Repositories
             ORDER BY p.CreatedAtUtc DESC";
 
             using var conn = Connection;
-            return await conn.QueryAsync<Partner>(query, param);
+            var result = await conn.QueryAsync<Partner>(query, param);
+            return result ?? Enumerable.Empty<Partner>();
         }
 
         public async Task<(IEnumerable<Partner> items, int totalCount)> GetAllPartnersPaginatedAsync(int pageNumber = 1, int pageSize = 10, bool? isActive = true, int? partnerTypeId = null, string searchName = null, string searchOib = null, string searchPartnerNumber = null)
@@ -135,7 +136,7 @@ namespace WienerInsurance.Repositories
                 FETCH NEXT @PageSize ROWS ONLY";
 
             var items = await conn.QueryAsync<Partner>(dataQuery, param);
-            return (items, totalCount);
+            return (items ?? Enumerable.Empty<Partner>(), totalCount);
         }
 
         public async Task<Partner> GetPartnerByIdAsync(int id)
@@ -215,13 +216,15 @@ namespace WienerInsurance.Repositories
         public async Task<IEnumerable<PartnerType>> GetPartnerTypesAsync()
         {
             using var conn = Connection;
-            return await conn.QueryAsync<PartnerType>("SELECT Id, Name FROM PartnerTypes");
+            var result = await conn.QueryAsync<PartnerType>("SELECT Id, Name FROM PartnerTypes");
+            return result ?? Enumerable.Empty<PartnerType>();
         }
 
         public async Task<IEnumerable<Gender>> GetGendersAsync()
         {
             using var conn = Connection;
-            return await conn.QueryAsync<Gender>("SELECT * FROM Genders");
+            var result = await conn.QueryAsync<Gender>("SELECT * FROM Genders");
+            return result ?? Enumerable.Empty<Gender>();
         }
     }
 }

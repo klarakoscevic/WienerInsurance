@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Security.Claims;
+using WienerInsurance.Models;
 
 namespace WienerInsurance.Pages.Account
 {
@@ -43,16 +44,19 @@ namespace WienerInsurance.Pages.Account
             {
                 var user = await _repo.GetUserByEmailAsync(Email);
                 var roles = await _repo.GetAllRolesAsync();
+                if (roles == null)
+                    roles = Enumerable.Empty<UserRole>();
 
 
                 var hasher = new PasswordHasher<string>();
 
                 if (user != null && hasher.VerifyHashedPassword(null, user.PasswordHash, Password) == PasswordVerificationResult.Success)
                 {
+                    var roleName = roles?.FirstOrDefault(g => g.Id == user.RoleId)?.Name ?? "User";
                     var claims = new List<Claim> {
-                    new Claim(ClaimTypes.Name, user.Email),
-                    new Claim(ClaimTypes.Role, roles.FirstOrDefault(g => g.Id == user.RoleId)?.Name)
-                };
+                        new Claim(ClaimTypes.Name, user.Email),
+                        new Claim(ClaimTypes.Role, roleName)
+                    };
                     var identity = new ClaimsIdentity(claims, "MyCookieAuth");
                     await HttpContext.SignInAsync("MyCookieAuth", new ClaimsPrincipal(identity));
                     _logger.LogInformation("User {Email} logged in successfully", Email);

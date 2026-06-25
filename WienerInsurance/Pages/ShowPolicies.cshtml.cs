@@ -44,7 +44,7 @@ namespace WienerInsurance.Pages
         {
             try
             {
-                AllPartners = await _partRepo.GetAllPartnersAsync(isActive: null);
+                AllPartners = await _partRepo.GetAllPartnersAsync(isActive: null) ?? Enumerable.Empty<Partner>();
                 bool? isActiveFilter = true;
                 if (!string.IsNullOrEmpty(StatusFilter))
                 {
@@ -88,7 +88,7 @@ namespace WienerInsurance.Pages
                     IsActive = p.IsActive,
                     PolicyNumber = p.PolicyNumber,
                     Amount = p.Amount,
-                    PartnerFullName = AllPartners.FirstOrDefault(part => part.Id == p.PartnerId)?.FullName
+                    PartnerFullName = AllPartners?.FirstOrDefault(part => part.Id == p.PartnerId)?.FullName
                 }).ToList();
             }
             catch (Exception ex)

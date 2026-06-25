@@ -61,7 +61,8 @@ namespace WienerInsurance.Repositories
                     ORDER BY p.CreatedAtUtc DESC";
 
             using var conn = Connection;
-            return await conn.QueryAsync<Policy>(query, param);
+            var result = await conn.QueryAsync<Policy>(query, param);
+            return result ?? Enumerable.Empty<Policy>();
         }
 
         // isActive: true = only active, false = only inactive, null = all
@@ -108,7 +109,7 @@ namespace WienerInsurance.Repositories
                     FETCH NEXT @PageSize ROWS ONLY";
 
             var items = await conn.QueryAsync<Policy>(dataQuery, param);
-            return (items, totalCount);
+            return (items ?? Enumerable.Empty<Policy>(), totalCount);
         }
 
         public async Task<bool> SoftDeletePolicyAsync(int id, DateTime modifiedAtUtc, int? modifiedByUserId)

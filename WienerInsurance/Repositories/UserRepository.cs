@@ -43,7 +43,8 @@ public class UserRepository
         var whereClause = whereConditions.Count > 0 ? "WHERE " + string.Join(" AND ", whereConditions) : "";
 
         var sql = $"SELECT u.* FROM Users u JOIN UserRoles r ON u.RoleId = r.Id {whereClause}";
-        return await db.QueryAsync<User>(sql, param);
+        var result = await db.QueryAsync<User>(sql, param);
+        return result ?? Enumerable.Empty<User>();
     }
 
     public async Task<(IEnumerable<User> items, int totalCount)> GetAllUsersPaginatedAsync(int pageNumber = 1, int pageSize = 10, bool? isActive = true, int? roleId = null, string searchName = null)
@@ -88,7 +89,7 @@ public class UserRepository
             FETCH NEXT @PageSize ROWS ONLY";
 
         var items = await db.QueryAsync<User>(dataQuery, param);
-        return (items, totalCount);
+        return (items ?? Enumerable.Empty<User>(), totalCount);
     }
 
     public async Task<int> CreateUserAsync(User user)
@@ -120,7 +121,8 @@ public class UserRepository
     public async Task<IEnumerable<UserRole>> GetAllRolesAsync()
     {
         using var db = new SqlConnection(_conn);
-        return await db.QueryAsync<UserRole>("SELECT * FROM UserRoles");
+        var result = await db.QueryAsync<UserRole>("SELECT * FROM UserRoles");
+        return result ?? Enumerable.Empty<UserRole>();
     }
 
     public async Task<IEnumerable<string>> GetAllAdminEmailsAsync()
@@ -133,7 +135,8 @@ public class UserRepository
         JOIN UserRoles r ON u.RoleId = r.Id
         WHERE r.Name = 'Admin'"; 
 
-        return await db.QueryAsync<string>(sql);
+        var result = await db.QueryAsync<string>(sql);
+        return result ?? Enumerable.Empty<string>();
     }
 
     public async Task<User> GetUserByIdAsync(int id)
