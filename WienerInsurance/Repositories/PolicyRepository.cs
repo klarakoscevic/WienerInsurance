@@ -5,10 +5,17 @@ using WienerInsurance.Models;
 
 namespace WienerInsurance.Repositories
 {
+    /// <summary>
+    /// Repository for managing policy data persistence operations.
+    /// </summary>
     public class PolicyRepository
     {
         private readonly string _connectionString;
 
+        /// <summary>
+        /// Initializes a new instance of the PolicyRepository class.
+        /// </summary>
+        /// <param name="connectionString">The database connection string.</param>
         public PolicyRepository(string connectionString)
         {
             _connectionString = connectionString;
@@ -16,6 +23,11 @@ namespace WienerInsurance.Repositories
 
         private IDbConnection Connection => new SqlConnection(_connectionString);
 
+        /// <summary>
+        /// Creates a new policy in the database.
+        /// </summary>
+        /// <param name="policy">The policy entity to create.</param>
+        /// <returns>True if the policy was successfully created; otherwise, false.</returns>
         public async Task<bool> CreatePolicyAsync(Policy policy)
         {
             var query = @"
@@ -27,7 +39,13 @@ namespace WienerInsurance.Repositories
             return rows > 0;
         }
 
-        // isActive: true = only active, false = only inactive, null = all
+        /// <summary>
+        /// Retrieves all policies from the database with optional filtering.
+        /// </summary>
+        /// <param name="isActive">Filter by active status. True returns only active policies, false returns only inactive, null returns all.</param>
+        /// <param name="partnerId">Filter by partner ID.</param>
+        /// <param name="searchPolicyNumber">Search by policy number (partial match).</param>
+        /// <returns>A collection of policies matching the filter criteria.</returns>
         public async Task<IEnumerable<Policy>> GetAllPoliciesAsync(bool? isActive = true, int? partnerId = null, string searchPolicyNumber = null)
         {
             var whereConditions = new List<string>();
@@ -65,7 +83,15 @@ namespace WienerInsurance.Repositories
             return result ?? Enumerable.Empty<Policy>();
         }
 
-        // isActive: true = only active, false = only inactive, null = all
+        /// <summary>
+        /// Retrieves a paginated list of policies with optional filtering.
+        /// </summary>
+        /// <param name="isActive">Filter by active status. True returns only active policies, false returns only inactive, null returns all.</param>
+        /// <param name="pageNumber">The page number to retrieve (1-based).</param>
+        /// <param name="pageSize">The number of items per page.</param>
+        /// <param name="partnerId">Filter by partner ID.</param>
+        /// <param name="searchPolicyNumber">Search by policy number (partial match).</param>
+        /// <returns>A tuple containing the paginated list of policies and the total count of matching records.</returns>
         public async Task<(IEnumerable<Policy> items, int totalCount)> GetAllPoliciesPaginatedAsync(bool? isActive = true, int pageNumber = 1, int pageSize = 10, int? partnerId = null, string searchPolicyNumber = null)
         {
             var whereConditions = new List<string>();
@@ -112,6 +138,13 @@ namespace WienerInsurance.Repositories
             return (items ?? Enumerable.Empty<Policy>(), totalCount);
         }
 
+        /// <summary>
+        /// Performs a soft delete on a policy by marking it as inactive.
+        /// </summary>
+        /// <param name="id">The unique identifier of the policy to delete.</param>
+        /// <param name="modifiedAtUtc">The UTC timestamp when the deletion occurred.</param>
+        /// <param name="modifiedByUserId">The ID of the user performing the deletion.</param>
+        /// <returns>True if the policy was successfully marked as inactive; otherwise, false.</returns>
         public async Task<bool> SoftDeletePolicyAsync(int id, DateTime modifiedAtUtc, int? modifiedByUserId)
         {
             var query = @"
@@ -123,6 +156,13 @@ namespace WienerInsurance.Repositories
             return rows > 0;
         }
 
+        /// <summary>
+        /// Restores a soft-deleted policy by marking it as active.
+        /// </summary>
+        /// <param name="id">The unique identifier of the policy to restore.</param>
+        /// <param name="modifiedAtUtc">The UTC timestamp when the restoration occurred.</param>
+        /// <param name="modifiedByUserId">The ID of the user performing the restoration.</param>
+        /// <returns>True if the policy was successfully restored; otherwise, false.</returns>
         public async Task<bool> RestorePolicyAsync(int id, DateTime modifiedAtUtc, int? modifiedByUserId)
         {
             var query = @"

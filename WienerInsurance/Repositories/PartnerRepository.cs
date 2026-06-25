@@ -5,10 +5,17 @@ using WienerInsurance.Models;
 
 namespace WienerInsurance.Repositories
 {
+    /// <summary>
+    /// Repository for managing partner data persistence operations.
+    /// </summary>
     public class PartnerRepository
     {
         private readonly string _connectionString;
 
+        /// <summary>
+        /// Initializes a new instance of the PartnerRepository class.
+        /// </summary>
+        /// <param name="connectionString">The database connection string.</param>
         public PartnerRepository(string connectionString)
         {
             _connectionString = connectionString;
@@ -16,6 +23,15 @@ namespace WienerInsurance.Repositories
 
         private IDbConnection Connection => new SqlConnection(_connectionString);
 
+        /// <summary>
+        /// Retrieves all partners from the database with optional filtering.
+        /// </summary>
+        /// <param name="isActive">Filter by active status. Null returns all partners regardless of status.</param>
+        /// <param name="partnerTypeId">Filter by partner type ID.</param>
+        /// <param name="searchName">Search by first name or last name (partial match).</param>
+        /// <param name="searchOib">Search by Croatian Personal Identification Number (partial match).</param>
+        /// <param name="searchPartnerNumber">Search by partner number (partial match).</param>
+        /// <returns>A collection of partners matching the filter criteria.</returns>
         public async Task<IEnumerable<Partner>> GetAllPartnersAsync(bool? isActive = null, int? partnerTypeId = null, string searchName = null, string searchOib = null, string searchPartnerNumber = null)
         {
             var whereConditions = new List<string>();
@@ -72,6 +88,17 @@ namespace WienerInsurance.Repositories
             return result ?? Enumerable.Empty<Partner>();
         }
 
+        /// <summary>
+        /// Retrieves a paginated list of partners with optional filtering.
+        /// </summary>
+        /// <param name="pageNumber">The page number to retrieve (1-based).</param>
+        /// <param name="pageSize">The number of items per page.</param>
+        /// <param name="isActive">Filter by active status. Default is true (active partners only).</param>
+        /// <param name="partnerTypeId">Filter by partner type ID.</param>
+        /// <param name="searchName">Search by first name or last name (partial match).</param>
+        /// <param name="searchOib">Search by Croatian Personal Identification Number (partial match).</param>
+        /// <param name="searchPartnerNumber">Search by partner number (partial match).</param>
+        /// <returns>A tuple containing the paginated list of partners and the total count of matching records.</returns>
         public async Task<(IEnumerable<Partner> items, int totalCount)> GetAllPartnersPaginatedAsync(int pageNumber = 1, int pageSize = 10, bool? isActive = true, int? partnerTypeId = null, string searchName = null, string searchOib = null, string searchPartnerNumber = null)
         {
             var whereConditions = new List<string>();
@@ -139,6 +166,11 @@ namespace WienerInsurance.Repositories
             return (items ?? Enumerable.Empty<Partner>(), totalCount);
         }
 
+        /// <summary>
+        /// Retrieves a single partner by their unique identifier.
+        /// </summary>
+        /// <param name="id">The unique identifier of the partner.</param>
+        /// <returns>The partner with the specified ID, or null if not found.</returns>
         public async Task<Partner> GetPartnerByIdAsync(int id)
         {
             var query = @"
@@ -158,6 +190,13 @@ namespace WienerInsurance.Repositories
             return await conn.QueryFirstOrDefaultAsync<Partner>(query, new { Id = id });
         }
 
+        /// <summary>
+        /// Performs a soft delete on a partner by marking them as inactive.
+        /// </summary>
+        /// <param name="id">The unique identifier of the partner to delete.</param>
+        /// <param name="modifiedAtUtc">The UTC timestamp when the deletion occurred.</param>
+        /// <param name="modifiedByUserId">The ID of the user performing the deletion.</param>
+        /// <returns>True if the partner was successfully marked as inactive; otherwise, false.</returns>
         public async Task<bool> SoftDeletePartnerAsync(int id, DateTime modifiedAtUtc, int? modifiedByUserId)
         {
             var query = @"
@@ -169,6 +208,13 @@ namespace WienerInsurance.Repositories
             return rows > 0;
         }
 
+        /// <summary>
+        /// Restores a soft-deleted partner by marking them as active.
+        /// </summary>
+        /// <param name="id">The unique identifier of the partner to restore.</param>
+        /// <param name="modifiedAtUtc">The UTC timestamp when the restoration occurred.</param>
+        /// <param name="modifiedByUserId">The ID of the user performing the restoration.</param>
+        /// <returns>True if the partner was successfully restored; otherwise, false.</returns>
         public async Task<bool> RestorePartnerAsync(int id, DateTime modifiedAtUtc, int? modifiedByUserId)
         {
             var query = @"
@@ -180,6 +226,11 @@ namespace WienerInsurance.Repositories
             return rows > 0;
         }
 
+        /// <summary>
+        /// Creates a new partner in the database.
+        /// </summary>
+        /// <param name="partner">The partner entity to create.</param>
+        /// <returns>True if the partner was successfully created; otherwise, false.</returns>
         public async Task<bool> CreatePartnerAsync(Partner partner)
         {
             var query = @"
@@ -193,6 +244,11 @@ namespace WienerInsurance.Repositories
             return rows > 0;
         }
 
+        /// <summary>
+        /// Checks whether an external code is unique (not already assigned to another partner).
+        /// </summary>
+        /// <param name="code">The external code to check.</param>
+        /// <returns>True if the code is unique; otherwise, false.</returns>
         public async Task<bool> IsExternalCodeUniqueAsync(string code)
         {
             var query = "SELECT COUNT(1) FROM Partners WHERE ExternalCode = @Code";
@@ -201,6 +257,10 @@ namespace WienerInsurance.Repositories
             return count == 0;
         }
 
+        /// <summary>
+        /// Updates an existing partner's information in the database.
+        /// </summary>
+        /// <param name="p">The partner entity with updated information.</param>
         public async Task UpdatePartnerAsync(Partner p)
         {
             var query = @"UPDATE Partners SET 
@@ -213,6 +273,10 @@ namespace WienerInsurance.Repositories
             await conn.ExecuteAsync(query, p);
         }
 
+        /// <summary>
+        /// Retrieves all available partner types from the database.
+        /// </summary>
+        /// <returns>A collection of all partner types.</returns>
         public async Task<IEnumerable<PartnerType>> GetPartnerTypesAsync()
         {
             using var conn = Connection;
@@ -220,6 +284,10 @@ namespace WienerInsurance.Repositories
             return result ?? Enumerable.Empty<PartnerType>();
         }
 
+        /// <summary>
+        /// Retrieves all available gender options from the database.
+        /// </summary>
+        /// <returns>A collection of all genders.</returns>
         public async Task<IEnumerable<Gender>> GetGendersAsync()
         {
             using var conn = Connection;
