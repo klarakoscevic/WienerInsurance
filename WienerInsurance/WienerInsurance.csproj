@@ -7,12 +7,18 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Pages\Admin\**" />
+    <Content Remove="Pages\Admin\**" />
+    <EmbeddedResource Remove="Pages\Admin\**" />
+    <None Remove="Pages\Admin\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Dapper" Version="2.1.79" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="7.0.1" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Pages\Admin\" />
     <Folder Include="wwwroot\lib\bootstrap\dist\css\" />
     <Folder Include="wwwroot\lib\bootstrap\dist\js\" />
   </ItemGroup>

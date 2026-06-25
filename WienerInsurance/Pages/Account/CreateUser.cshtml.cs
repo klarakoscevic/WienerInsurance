@@ -12,7 +12,13 @@ namespace WienerInsurance.Pages.Account
     public class CreateUserModel : PageModel
     {
         private readonly UserRepository _repo;
-        public CreateUserModel(UserRepository repo) => _repo = repo;
+        private readonly ILogger<CreateUserModel> _logger;
+
+        public CreateUserModel(UserRepository repo, ILogger<CreateUserModel> logger)
+        {
+            _repo = repo;
+            _logger = logger;
+        }
 
        
         [BindProperty] public UserInputViewModel Input { get; set; }
@@ -20,45 +26,67 @@ namespace WienerInsurance.Pages.Account
 
         public async Task OnGetAsync()
         {
-            Roles = await _repo.GetAllRolesAsync();
+            try
+            {
+                Roles = await _repo.GetAllRolesAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading roles for create user page");
+                TempData["Error"] = "Došlo je do greške prilikom učitavanja podataka. Molimo pokušajte ponovo.";
+                Roles = new List<UserRole>();
+            }
         }
 
         public async Task<IActionResult> OnPostAsync()
         {
-            var existing = await _repo.GetUserByEmailAsync(Input.Email);
-            if (existing != null)
+            try
             {
-                ModelState.AddModelError("Input.Email", "Postoji korisnik s ovom email adresom");
+                var existing = await _repo.GetUserByEmailAsync(Input.Email);
+                if (existing != null)
+                {
+                    ModelState.AddModelError("Input.Email", "Postoji korisnik s ovom email adresom");
+                    Roles = await _repo.GetAllRolesAsync();
+                    return Page();
+                }
+
+                if (!ModelState.IsValid)
+                {
+                    Roles = await _repo.GetAllRolesAsync();
+                    return Page();
+                }
+
+                var hasher = new PasswordHasher<string>();
+                var hash = hasher.HashPassword(null, Input.Password);
+
+                var user = new User
+                {
+                    Email = Input.Email,
+                    FirstName = Input.FirstName,
+                    LastName = Input.LastName,
+                    PasswordHash = hash,
+                    RoleId = Input.RoleId,
+                    CreatedAtUtc = DateTime.UtcNow
+                };
+
+                // set CreatedByUserId from the currently logged in user (fallback to system user id 1)
+                var current = await _repo.GetUserByEmailAsync(User.Identity.Name);
+                user.CreatedByUserId = current?.Id ?? 1;
+
+                var id = await _repo.CreateUserAsync(user);
+                _logger.LogInformation("User created successfully. Email: {Email}, CreatedBy: {CreatedBy}", 
+                    Input.Email, User?.Identity?.Name);
+
+                return RedirectToPage("/Account/ShowUsers");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating user. Email: {Email}, CreatedBy: {CreatedBy}", 
+                    Input?.Email, User?.Identity?.Name);
+                ModelState.AddModelError("", "Došlo je do greške prilikom spremanja. Molimo pokušajte ponovo.");
                 Roles = await _repo.GetAllRolesAsync();
                 return Page();
             }
-
-            if (!ModelState.IsValid)
-            {
-                Roles = await _repo.GetAllRolesAsync();
-                return Page();
-            }
-
-            var hasher = new PasswordHasher<string>();
-            var hash = hasher.HashPassword(null, Input.Password);
-
-            var user = new User
-            {
-                Email = Input.Email,
-                FirstName = Input.FirstName,
-                LastName = Input.LastName,
-                PasswordHash = hash,
-                RoleId = Input.RoleId,
-                CreatedAtUtc = DateTime.UtcNow
-            };
-
-            // set CreatedByUserId from the currently logged in user (fallback to system user id 1)
-            var current = await _repo.GetUserByEmailAsync(User.Identity.Name);
-            user.CreatedByUserId = current?.Id ?? 1;
-
-            var id = await _repo.CreateUserAsync(user);
-
-            return RedirectToPage("/Account/ShowUsers");
         }
     }
 }

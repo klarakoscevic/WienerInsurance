@@ -10,7 +10,13 @@ namespace WienerInsurance.Pages.Account
     public class ShowUsersModel : PageModel
     {
         private readonly UserRepository _repo;
-        public ShowUsersModel(UserRepository repo) => _repo = repo;
+        private readonly ILogger<ShowUsersModel> _logger;
+
+        public ShowUsersModel(UserRepository repo, ILogger<ShowUsersModel> logger)
+        {
+            _repo = repo;
+            _logger = logger;
+        }
 
         public IEnumerable<UserDisplayViewModel> Users { get; set; }
         public IEnumerable<UserRole> Roles { get; set; }
@@ -31,85 +37,115 @@ namespace WienerInsurance.Pages.Account
 
         public async Task OnGetAsync()
         {
-            Roles = await _repo.GetAllRolesAsync();
-
-            bool? isActiveFilter = true;
-            if (!string.IsNullOrEmpty(StatusFilter))
+            try
             {
-                switch (StatusFilter.ToLowerInvariant())
+                Roles = await _repo.GetAllRolesAsync();
+
+                bool? isActiveFilter = true;
+                if (!string.IsNullOrEmpty(StatusFilter))
                 {
-                    case "all":
-                        isActiveFilter = null;
-                        break;
-                    case "inactive":
-                        isActiveFilter = false;
-                        break;
-                    default:
-                        isActiveFilter = true;
-                        break;
+                    switch (StatusFilter.ToLowerInvariant())
+                    {
+                        case "all":
+                            isActiveFilter = null;
+                            break;
+                        case "inactive":
+                            isActiveFilter = false;
+                            break;
+                        default:
+                            isActiveFilter = true;
+                            break;
+                    }
                 }
+
+                if (PageNumber < 1) PageNumber = 1;
+                if (PageSize < 1) PageSize = 10;
+
+                var (users, totalCount) = await _repo.GetAllUsersPaginatedAsync(
+                    pageNumber: PageNumber,
+                    pageSize: PageSize,
+                    isActive: isActiveFilter,
+                    roleId: RoleId.HasValue && RoleId.Value != 0 ? RoleId.Value : null,
+                    searchName: SearchName
+                );
+
+                var totalPages = (int)Math.Ceiling((double)totalCount / PageSize);
+                Pagination = new PaginationViewModel
+                {
+                    CurrentPage = PageNumber,
+                    PageSize = PageSize,
+                    TotalItems = totalCount,
+                    TotalPages = totalPages
+                };
+
+                Users = users.Select(u => new UserDisplayViewModel
+                {
+                    Id = u.Id,
+                    Email = u.Email,
+                    FullName = $"{u.FirstName} {u.LastName}",
+                    RoleName = Roles.FirstOrDefault(g => g.Id == u.RoleId)?.Name,
+                    IsActive = u.IsActive,
+                    CreatedAtUtc = u.CreatedAtUtc,
+                    ModifiedAtUtc = u.ModifiedAtUtc
+                }).ToList();
             }
-
-            if (PageNumber < 1) PageNumber = 1;
-            if (PageSize < 1) PageSize = 10;
-
-            var (users, totalCount) = await _repo.GetAllUsersPaginatedAsync(
-                pageNumber: PageNumber,
-                pageSize: PageSize,
-                isActive: isActiveFilter,
-                roleId: RoleId.HasValue && RoleId.Value != 0 ? RoleId.Value : null,
-                searchName: SearchName
-            );
-
-            var totalPages = (int)Math.Ceiling((double)totalCount / PageSize);
-            Pagination = new PaginationViewModel
+            catch (Exception ex)
             {
-                CurrentPage = PageNumber,
-                PageSize = PageSize,
-                TotalItems = totalCount,
-                TotalPages = totalPages
-            };
-
-            Users = users.Select(u => new UserDisplayViewModel
-            {
-                Id = u.Id,
-                Email = u.Email,
-                FullName = $"{u.FirstName} {u.LastName}",
-                RoleName = Roles.FirstOrDefault(g => g.Id == u.RoleId)?.Name,
-                IsActive = u.IsActive,
-                CreatedAtUtc = u.CreatedAtUtc,
-                ModifiedAtUtc = u.ModifiedAtUtc
-            }).ToList();
+                _logger.LogError(ex, "Error loading users. PageNumber: {PageNumber}, PageSize: {PageSize}, StatusFilter: {StatusFilter}", 
+                    PageNumber, PageSize, StatusFilter);
+                TempData["Error"] = "Došlo je do greške prilikom učitavanja korisnika. Molimo pokušajte ponovo.";
+                Users = new List<UserDisplayViewModel>();
+                Roles = new List<UserRole>();
+                Pagination = new PaginationViewModel { CurrentPage = 1, PageSize = 10, TotalItems = 0, TotalPages = 0 };
+            }
         }
 
         public async Task<IActionResult> OnPostDeleteAsync(int id)
         {
-            var email = User?.Identity?.Name;
-            var user = email != null ? await _repo.GetUserByEmailAsync(email) : null;
-            var success = await _repo.SoftDeleteUserAsync(id, DateTime.UtcNow, user?.Id ?? 1);
-            if (success)
+            try
             {
-                TempData["Success"] = "Korisnik je uspješno obrisan.";
+                var email = User?.Identity?.Name;
+                var user = email != null ? await _repo.GetUserByEmailAsync(email) : null;
+                var success = await _repo.SoftDeleteUserAsync(id, DateTime.UtcNow, user?.Id ?? 1);
+                if (success)
+                {
+                    TempData["Success"] = "Korisnik je uspješno obrisan.";
+                }
+                else
+                {
+                    TempData["Error"] = "Greška pri brisanju korisnika.";
+                }
             }
-            else
+            catch (Exception ex)
             {
-                TempData["Error"] = "Greška pri brisanju korisnika.";
+                _logger.LogError(ex, "Error deleting user. UserId: {UserId}, DeletedBy: {DeletedBy}", 
+                    id, User?.Identity?.Name);
+                TempData["Error"] = "Došlo je do greške prilikom brisanja korisnika. Molimo pokušajte ponovo.";
             }
             return RedirectToPage(new { RoleId = RoleId, StatusFilter = StatusFilter, SearchName = SearchName, PageNumber = PageNumber, PageSize = PageSize });
         }
 
         public async Task<IActionResult> OnPostRestoreAsync(int id)
         {
-            var email = User?.Identity?.Name;
-            var user = email != null ? await _repo.GetUserByEmailAsync(email) : null;
-            var success = await _repo.RestoreUserAsync(id, DateTime.UtcNow, user?.Id ?? 1);
-            if (success)
+            try
             {
-                TempData["Success"] = "Korisnik je ponovno aktiviran.";
+                var email = User?.Identity?.Name;
+                var user = email != null ? await _repo.GetUserByEmailAsync(email) : null;
+                var success = await _repo.RestoreUserAsync(id, DateTime.UtcNow, user?.Id ?? 1);
+                if (success)
+                {
+                    TempData["Success"] = "Korisnik je ponovno aktiviran.";
+                }
+                else
+                {
+                    TempData["Error"] = "Greška pri aktiviranju korisnika.";
+                }
             }
-            else
+            catch (Exception ex)
             {
-                TempData["Error"] = "Greška pri aktiviranju korisnika.";
+                _logger.LogError(ex, "Error restoring user. UserId: {UserId}, RestoredBy: {RestoredBy}", 
+                    id, User?.Identity?.Name);
+                TempData["Error"] = "Došlo je do greške prilikom aktiviranja korisnika. Molimo pokušajte ponovo.";
             }
             return RedirectToPage(new { RoleId = RoleId, StatusFilter = StatusFilter, SearchName = SearchName, PageNumber = PageNumber, PageSize = PageSize });
         }
