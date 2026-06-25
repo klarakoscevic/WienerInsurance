@@ -68,7 +68,9 @@ namespace WienerInsurance.Pages
                 var (policies, totalCount) = await _pRepo.GetAllPoliciesPaginatedAsync(
                     isActive: isActiveFilter,
                     pageNumber: PageNumber,
-                    pageSize: PageSize
+                    pageSize: PageSize,
+                    partnerId: SelectedPartnerId,
+                    searchPolicyNumber: SearchPolicyNumber
                 );
 
                 var totalPages = (int)Math.Ceiling((double)totalCount / PageSize);
@@ -80,15 +82,7 @@ namespace WienerInsurance.Pages
                     TotalPages = totalPages
                 };
 
-                var allPolicies = policies.ToList();
-
-                if (SelectedPartnerId.HasValue)
-                    allPolicies = allPolicies.Where(p => p.PartnerId == SelectedPartnerId).ToList();
-
-                if (!string.IsNullOrEmpty(SearchPolicyNumber))
-                    allPolicies = allPolicies.Where(p => p.PolicyNumber.Contains(SearchPolicyNumber)).ToList();
-
-                Policies = allPolicies.Select(p => new PolicyDisplayViewModel
+                Policies = policies.Select(p => new PolicyDisplayViewModel
                 {
                     Id = p.Id,
                     IsActive = p.IsActive,

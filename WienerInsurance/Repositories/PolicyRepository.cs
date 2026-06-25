@@ -65,18 +65,32 @@ namespace WienerInsurance.Repositories
         }
 
         // isActive: true = only active, false = only inactive, null = all
-        public async Task<(IEnumerable<Policy> items, int totalCount)> GetAllPoliciesPaginatedAsync(bool? isActive = true, int pageNumber = 1, int pageSize = 10)
+        public async Task<(IEnumerable<Policy> items, int totalCount)> GetAllPoliciesPaginatedAsync(bool? isActive = true, int pageNumber = 1, int pageSize = 10, int? partnerId = null, string searchPolicyNumber = null)
         {
-            var whereClause = "";
+            var whereConditions = new List<string>();
             var param = new DynamicParameters();
             param.Add("@PageSize", pageSize);
             param.Add("@PageNumber", pageNumber);
 
             if (isActive.HasValue)
             {
-                whereClause = " WHERE ISNULL(p.IsActive, 1) = @IsActive";
+                whereConditions.Add("ISNULL(p.IsActive, 1) = @IsActive");
                 param.Add("@IsActive", isActive.Value ? 1 : 0);
             }
+
+            if (partnerId.HasValue)
+            {
+                whereConditions.Add("p.PartnerId = @PartnerId");
+                param.Add("@PartnerId", partnerId.Value);
+            }
+
+            if (!string.IsNullOrEmpty(searchPolicyNumber))
+            {
+                whereConditions.Add("p.PolicyNumber LIKE @SearchPolicyNumber");
+                param.Add("@SearchPolicyNumber", $"%{searchPolicyNumber}%");
+            }
+
+            var whereClause = whereConditions.Count > 0 ? " WHERE " + string.Join(" AND ", whereConditions) : "";
 
             // Get total count
             var countQuery = $"SELECT COUNT(*) FROM Policies p {whereClause}";
