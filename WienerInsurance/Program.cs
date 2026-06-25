@@ -41,7 +41,7 @@ Task SeedAsync()
                 await conn.ExecuteAsync("INSERT INTO UserRoles (Name) VALUES (@Name)", new { Name = "User" });
 
             // Get admin email from configuration
-            var configAdminEmail = config["DefaultAdminEmail"] ?? "kkoscevic@gmail.com";
+            var configAdminEmail = config["DefaultAdminEmail"] ?? "weiner@gmail.com";
             var admin = await conn.QueryFirstOrDefaultAsync<int?>("SELECT Id FROM Users WHERE Email = @Email", new { Email = configAdminEmail });
             if (admin == null)
             {
@@ -53,11 +53,17 @@ Task SeedAsync()
                     var hash = hasher.HashPassword(null, adminPassword);
 
                     // Get admin email from configuration
-                    var adminEmail = config["DefaultAdminEmail"] ?? "kkoscevic@gmail.com";
+                    var adminEmail = config["DefaultAdminEmail"] ?? "weiner@gmail.com";
 
-                    await conn.ExecuteAsync(@"INSERT INTO Users (Email, FirstName, LastName, PasswordHash, RoleId)
-                                             VALUES (@Email, @FirstName, @LastName, @PasswordHash, @RoleId)",
-                        new { Email = adminEmail, FirstName = "System", LastName = "Administrator", PasswordHash = hash, RoleId = adminRoleId });
+                    // Insert user and get the new ID
+                    var newUserId = await conn.QuerySingleAsync<int>(@"
+                        INSERT INTO Users (Email, FirstName, LastName, PasswordHash, RoleId, CreatedAtUtc, IsActive)
+                        OUTPUT INSERTED.Id
+                        VALUES (@Email, @FirstName, @LastName, @PasswordHash, @RoleId, @CreatedAtUtc, @IsActive)",
+                        new { Email = adminEmail, FirstName = "System", LastName = "Administrator", PasswordHash = hash, RoleId = adminRoleId, CreatedAtUtc = DateTime.UtcNow, IsActive = true });
+
+                    // Update CreatedByUserId to point to itself
+                    await conn.ExecuteAsync(@"UPDATE Users SET CreatedByUserId = @UserId WHERE Id = @UserId", new { UserId = newUserId });
             }
         }
         catch (Exception ex)
